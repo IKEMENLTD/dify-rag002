@@ -1,0 +1,36 @@
+# Core Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# Database (Supabase)
+# psycopg2-binary removed - using Supabase client instead
+
+# HTTP Requests
+requests==2.31.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Security
+Werkzeug==3.0.1
+
+# Utilities
+urllib3==2.1.0
+certifi==2023.11.17
+charset-normalizer==3.3.2
+idna==3.6
+
+# LINE Bot integration
+line-bot-sdk==3.9.0
+
+# Supabase
+supabase==2.5.0
+
+# Claude AI API
+anthropic==0.20.0
+
+# Scheduler for reminders
+APScheduler==3.10.4
