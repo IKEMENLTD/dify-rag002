@@ -1,61 +1,32 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
+
+# Environments
+.env
+.venv
 env/
 venv/
 ENV/
-dify_chat_env/
-.venv/
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# IDE
-.vscode/
+# IDE settings
 .idea/
-*.swp
-*.swo
-*~
+.vscode/
 
-# OS
-.DS_Store
-Thumbs.db
+# Virtual environment
+venv/
+ENV/
 
-# Logs
-*.log
-logs/
+# Instance folder
+instance/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Cache files
+.pytest_cache/
+.mypy_cache/
+.webassets-cache
 
-# Sensitive files
-secrets/
-private/
-*.pem
-*.key
-
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
-
-# Build files
+# Distribution / packaging
 dist/
 build/
 *.egg-info/
-
-# Testing
-.coverage
-.pytest_cache/
-htmlcov/
-
-# Security warning
-SECURITY_WARNING.md
