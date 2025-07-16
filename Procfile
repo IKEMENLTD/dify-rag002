@@ -1,1 +1,1 @@
-web: python production_secure_main.py
+web: python simple_test.py
