@@ -634,8 +634,15 @@ def test():
     return jsonify({
         'status': 'OK',
         'message': 'ベテランAI サーバーが正常に動作しています',
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': datetime.utcnow().isoformat(),
+        'port': os.environ.get('PORT', '5000'),
+        'env': os.environ.get('FLASK_ENV', 'development')
     })
+
+@app.route('/ping')
+def ping():
+    """簡単なping"""
+    return "pong"
 
 @app.route('/api/csrf-token')
 def csrf_token():
@@ -1039,25 +1046,29 @@ def create_tables():
             logger.info("Admin user created")
 
 if __name__ == '__main__':
-    create_tables()
-    
     try:
+        print("🚀 ベテランAI Starting...")
+        print(f"🌐 Environment: {os.environ.get('FLASK_ENV', 'development')}")
+        
+        # Skip database creation for now to avoid errors
+        # create_tables()
+        
         port = int(os.environ.get('PORT', 5000))
         debug_mode = os.environ.get('FLASK_ENV') == 'development'
         
-        logger.info(f"Production secure application starting on port {port}")
-        
-        if debug_mode:
-            logger.warning("Running in development mode")
+        print(f"🎯 Starting server on 0.0.0.0:{port}")
+        print(f"🔧 Debug mode: {debug_mode}")
         
         app.run(
             host='0.0.0.0',
             port=port,
             debug=debug_mode,
-            use_reloader=debug_mode,
+            use_reloader=False,  # Disable reloader for production
             threaded=True
         )
         
     except Exception as e:
-        logger.critical(f"Application startup failed")
+        print(f"❌ Application startup failed: {e}")
+        import traceback
+        traceback.print_exc()
         raise
