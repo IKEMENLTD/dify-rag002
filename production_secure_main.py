@@ -613,6 +613,16 @@ def dashboard():
     """管理ダッシュボード（認証必須）"""
     return send_from_directory('.', 'dashboard_premium.html')
 
+@app.route('/dashboard_premium.html')
+def dashboard_premium_html():
+    """プレミアムダッシュボード直接アクセス"""
+    return send_from_directory('.', 'dashboard_premium.html')
+
+@app.route('/index_secure.html')
+def index_secure_html():
+    """セキュアインデックス直接アクセス"""
+    return send_from_directory('.', 'index_secure.html')
+
 @app.route('/api/csrf-token')
 def csrf_token():
     """CSRFトークン取得"""
