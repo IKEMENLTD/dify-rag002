@@ -623,6 +623,20 @@ def index_secure_html():
     """セキュアインデックス直接アクセス"""
     return send_from_directory('.', 'index_secure.html')
 
+@app.route('/favicon.ico')
+def favicon():
+    """ファビコン"""
+    return send_from_directory('.', 'favicon.ico')
+
+@app.route('/test')
+def test():
+    """テスト用エンドポイント"""
+    return jsonify({
+        'status': 'OK',
+        'message': 'ベテランAI サーバーが正常に動作しています',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
 @app.route('/api/csrf-token')
 def csrf_token():
     """CSRFトークン取得"""
