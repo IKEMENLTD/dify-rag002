@@ -13,11 +13,9 @@ services:
         value: 3.11.7
       - key: FLASK_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite:///app.db
+        value: sqlite:///production.db
     
     autoDeploy: true
