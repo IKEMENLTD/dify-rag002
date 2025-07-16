@@ -1,12 +1,12 @@
 services:
   - type: web
-    name: veteran-ai-premium
+    name: veteran-ai-test-deploy
     runtime: python
     region: oregon
     plan: free
     
     buildCommand: pip install flask
-    startCommand: python simple_test.py
+    startCommand: python app.py
     
     envVars:
       - key: PYTHON_VERSION
