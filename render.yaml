@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: dify-rag002
+    name: veteran-ai-premium
     runtime: python
     region: oregon
     plan: free
@@ -13,9 +13,15 @@ services:
         value: 3.11.7
       - key: FLASK_ENV
         value: production
+      - key: FLASK_DEBUG
+        value: False
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
         value: sqlite:///production.db
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
     
     autoDeploy: true
