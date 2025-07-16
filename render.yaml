@@ -5,8 +5,8 @@ services:
     region: oregon
     plan: free
     
-    buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    buildCommand: pip install -r requirements_production.txt
+    startCommand: python production_secure_main.py
     
     envVars:
       - key: PYTHON_VERSION
@@ -15,5 +15,9 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///app.db
     
     autoDeploy: true
