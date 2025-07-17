@@ -7,5 +7,5 @@ services:
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 60
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: "3.11"
     autoDeploy: true
