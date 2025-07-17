@@ -2,13 +2,13 @@ from flask import Blueprint, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from config import Config
+import os
 import logging
 
 # Initialize LINE Bot
 line_bot_bp = Blueprint('line_bot', __name__)
-line_bot_api = LineBotApi(Config.LINE_CHANNEL_ACCESS_TOKEN)
-handler = WebhookHandler(Config.LINE_CHANNEL_SECRET)
+line_bot_api = LineBotApi(os.getenv('LINE_CHANNEL_ACCESS_TOKEN', ''))
+handler = WebhookHandler(os.getenv('LINE_CHANNEL_SECRET', ''))
 
 logger = logging.getLogger(__name__)
 

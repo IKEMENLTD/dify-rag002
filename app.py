@@ -152,17 +152,31 @@ def call_claude_api(message):
         return None
     
     try:
-        import anthropic
-        client = anthropic.Client(api_key=app.config['ANTHROPIC_API_KEY'])
+        headers = {
+            'x-api-key': app.config['ANTHROPIC_API_KEY'],
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json'
+        }
         
-        response = client.completions.create(
-            model="claude-2",
-            prompt=f"\n\nHuman: {message}\n\nAssistant:",
-            max_tokens_to_sample=1000,
-            temperature=0.7
+        payload = {
+            'model': 'claude-3-opus-20240229',
+            'messages': [
+                {'role': 'user', 'content': message}
+            ],
+            'max_tokens': 1000,
+            'temperature': 0.7
+        }
+        
+        response = requests.post(
+            'https://api.anthropic.com/v1/messages',
+            headers=headers,
+            json=payload,
+            timeout=30
         )
         
-        return response.completion.strip()
+        if response.status_code == 200:
+            data = response.json()
+            return data['content'][0]['text']
     
     except Exception as e:
         app.logger.error(f"Claude API error: {str(e)}")
