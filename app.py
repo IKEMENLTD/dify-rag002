@@ -5,28 +5,29 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return """
+    port = os.environ.get('PORT', '5000')
+    return f"""
     <!DOCTYPE html>
     <html>
     <head>
         <title>ベテランAI</title>
         <style>
-            body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
-            h1 { color: #1d4ed8; }
-            .status { background: #f0f9ff; padding: 20px; border-radius: 10px; margin: 20px 0; }
+            body {{ font-family: Arial, sans-serif; margin: 40px; text-align: center; }}
+            h1 {{ color: #1d4ed8; }}
+            .status {{ background: #f0f9ff; padding: 20px; border-radius: 10px; margin: 20px 0; }}
         </style>
     </head>
     <body>
         <h1>🤖 ベテランAI</h1>
         <div class="status">
             <p>✅ サーバーが正常に動作しています</p>
-            <p>🌐 Port: {}</p>
+            <p>🌐 Port: {port}</p>
         </div>
         <p><a href="/ping">Ping Test</a></p>
         <p><a href="/dashboard">Dashboard</a></p>
     </body>
     </html>
-    """.format(os.environ.get('PORT', '5000'))
+    """
 
 @app.route('/ping')
 def ping():
