@@ -14,6 +14,7 @@ CORS(app, origins=app.config['CORS_ORIGINS'])
 try:
     from line_bot import line_bot_bp
     app.register_blueprint(line_bot_bp)
+    app.logger.info("LINE Bot blueprint registered successfully")
 except Exception as e:
     app.logger.warning(f"Could not initialize LINE Bot: {str(e)}")
 
@@ -46,6 +47,22 @@ def home():
 @app.route('/ping')
 def ping():
     return "pong - ベテランAI is alive!"
+
+@app.route('/debug/routes')
+def debug_routes():
+    """Debug endpoint to show all registered routes"""
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify({
+        'routes': routes,
+        'line_bot_configured': 'LINE_CHANNEL_SECRET' in os.environ,
+        'env_vars': list(os.environ.keys())
+    })
 
 @app.route('/dashboard')
 def dashboard():
