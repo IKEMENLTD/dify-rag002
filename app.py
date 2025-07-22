@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
@@ -10,49 +11,23 @@ CORS(app)
 
 def clean_response(text):
     """Remove thinking tags and clean up the response"""
-    print(f"[DEBUG] clean_response INPUT: {repr(text)}")
-    
     if not text:
-        print("[DEBUG] Text is empty, returning as-is")
         return text
     
-    original_text = text
+    # Remove <think>...</think> tags and their content (case insensitive)
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
     
-    # Step 1: Remove <think>...</think> tags and their content (case insensitive)
-    think_pattern = r'<think>.*?</think>'
-    think_matches = re.findall(think_pattern, text, flags=re.DOTALL | re.IGNORECASE)
-    print(f"[DEBUG] Found {len(think_matches)} <think> tags")
-    for i, match in enumerate(think_matches):
-        print(f"[DEBUG] <think> tag {i+1}: {repr(match[:100])}...")
-    
-    text = re.sub(think_pattern, '', text, flags=re.DOTALL | re.IGNORECASE)
-    print(f"[DEBUG] After removing <think> tags: {repr(text[:200])}...")
-    
-    # Step 2: Basic formatting improvements for readability
-    # Add line breaks after key punctuation for better readability
-    before_formatting = text
+    # Basic formatting improvements for readability
     text = text.replace('。 ', '。\n\n')  # Period + space -> Period + double newline
     text = text.replace('？ ', '？\n\n')  # Question + space -> Question + double newline  
     text = text.replace('！ ', '！\n\n')  # Exclamation + space -> Exclamation + double newline
     text = text.replace('【', '\n\n【')   # Section headers
     text = text.replace('▼', '\n\n▼')    # Subsection markers
     
-    formatting_changed = before_formatting != text
-    print(f"[DEBUG] Formatting changed: {formatting_changed}")
-    if formatting_changed:
-        print(f"[DEBUG] After formatting: {repr(text[:200])}...")
-    
-    # Step 3: Clean up excessive whitespace
-    before_whitespace = text
+    # Clean up excessive whitespace
     text = re.sub(r'[ \t]+', ' ', text)      # Multiple spaces/tabs to single space
     text = re.sub(r'\n{3,}', '\n\n', text)   # Multiple newlines to double
     text = text.strip()
-    
-    whitespace_changed = before_whitespace != text
-    print(f"[DEBUG] Whitespace cleanup changed: {whitespace_changed}")
-    
-    print(f"[DEBUG] clean_response OUTPUT: {repr(text)}")
-    print(f"[DEBUG] Original length: {len(original_text)}, Final length: {len(text)}")
     
     return text
 
@@ -212,36 +187,19 @@ def chat():
                 const message = input.value.trim();
                 if (!message) return;
                 
-                console.log('[CLIENT DEBUG] Sending message:', message);
                 addMessage(message, 'user');
                 input.value = '';
-                
-                const requestBody = {message: message};
-                console.log('[CLIENT DEBUG] Request body:', requestBody);
                 
                 fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify({message: message})
                 })
-                .then(response => {
-                    console.log('[CLIENT DEBUG] Response status:', response.status);
-                    console.log('[CLIENT DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('[CLIENT DEBUG] Raw response data:', data);
-                    console.log('[CLIENT DEBUG] Response type:', typeof data.response);
-                    console.log('[CLIENT DEBUG] Response length:', data.response ? data.response.length : 'N/A');
-                    console.log('[CLIENT DEBUG] Response content preview:', data.response ? data.response.substring(0, 100) : 'N/A');
-                    
-                    const finalResponse = data.response || 'エラーが発生しました';
-                    console.log('[CLIENT DEBUG] Final response to display:', finalResponse);
-                    
-                    addMessage(finalResponse, 'assistant');
+                    addMessage(data.response || 'エラーが発生しました', 'assistant');
                 })
                 .catch(error => {
-                    console.error('[CLIENT DEBUG] Fetch error:', error);
                     addMessage('通信エラーが発生しました', 'assistant');
                 });
             }
@@ -265,17 +223,12 @@ def api_chat():
         data = request.get_json()
         message = data.get('message', '')
         
-        print(f"Received message: {message}")
-        
         # Default response
         response = f"受信しました: {message}"
         
-        # Debug: Check environment variables
+        # Check environment variables
         dify_api_key = os.getenv('DIFY_API_KEY')
         anthropic_key = os.getenv('ANTHROPIC_API_KEY')
-        
-        print(f"Dify API Key exists: {bool(dify_api_key)}")
-        print(f"Anthropic API Key exists: {bool(anthropic_key)}")
         
         if not dify_api_key and not anthropic_key:
             response = "APIキーが設定されていません。環境変数を確認してください。"
@@ -294,7 +247,6 @@ def api_chat():
                     'conversation_id': '',
                     'user': 'web-user'
                 }
-                print(f"Calling Dify API...")
                 # Try chat-messages first (for chatbots)
                 resp = requests.post(
                     'https://api.dify.ai/v1/chat-messages',
@@ -305,35 +257,21 @@ def api_chat():
                 
                 # If chat-messages fails, try completion-messages (for text generation)
                 if resp.status_code != 200:
-                    print(f"Chat endpoint failed ({resp.status_code}), trying completion endpoint...")
                     resp = requests.post(
                         'https://api.dify.ai/v1/completion-messages',
                         headers=headers,
                         json=payload,
                         timeout=30
                     )
-                print(f"Dify response status: {resp.status_code}")
                 
                 if resp.status_code == 200:
-                    print(f"[DEBUG] Raw Dify API response: {resp.text[:500]}...")
-                    
                     try:
                         data = resp.json()
-                        print(f"[DEBUG] Parsed JSON keys: {list(data.keys())}")
-                        print(f"[DEBUG] JSON data structure: {str(data)[:300]}...")
-                        
                         raw_response = data.get('answer', response)
-                        print(f"[DEBUG] Raw answer extracted: {repr(raw_response)}")
-                        print(f"[DEBUG] Raw answer type: {type(raw_response)}")
-                        
                         response = clean_response(raw_response)
-                        
-                        print(f"[DEBUG] Final response sent to user: {repr(response)}")
                     except Exception as e:
-                        print(f"[DEBUG] JSON parsing error: {str(e)}")
                         response = f"JSON解析エラー: {str(e)}"
                 else:
-                    print(f"Dify error response: {resp.text[:200]}")
                     # Parse error for better user feedback
                     try:
                         error_data = resp.json()
@@ -346,7 +284,6 @@ def api_chat():
                     except:
                         response = f"🤖 一時的にサービスが利用できません。メッセージ: {message}"
             except Exception as e:
-                print(f"Dify API error: {str(e)}")
                 response = f"Dify APIエラー: {str(e)[:100]}"
         
         return jsonify({'response': response})
@@ -414,7 +351,6 @@ def line_webhook():
     """LINE webhook handler - only responds to messages containing 'ベテランAI'"""
     try:
         body = request.get_json()
-        print(f"LINE webhook received: {body}")
         
         if not body or 'events' not in body:
             return 'OK', 200
@@ -425,15 +361,12 @@ def line_webhook():
                 
                 # Only respond if message contains "ベテランAI"
                 if 'ベテランAI' in message_text:
-                    print(f"LINE message contains 'ベテランAI': {message_text}")
                     # Process the message through our chat API
-                    # For now, just log it - actual LINE response would need LINE Bot SDK
-                else:
-                    print(f"LINE message ignored (no 'ベテランAI'): {message_text}")
+                    # For now, just acknowledge - actual LINE response would need LINE Bot SDK
+                    pass
         
         return 'OK', 200
     except Exception as e:
-        print(f"LINE webhook error: {str(e)}")
         return 'OK', 200
 
 if __name__ == '__main__':
