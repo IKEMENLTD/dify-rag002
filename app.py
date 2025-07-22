@@ -141,6 +141,9 @@ def api_chat():
                 if resp.status_code == 200:
                     data = resp.json()
                     response = data.get('answer', response)
+                elif resp.status_code == 400:
+                    # Dify app unavailable, use Claude instead
+                    pass
                 elif resp.status_code == 403:
                     response = f"Dify API認証エラー (403): APIキーを確認してください"
                 elif resp.status_code == 404:
