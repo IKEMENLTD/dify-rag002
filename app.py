@@ -61,29 +61,37 @@ def save_conversation(user_id, message, response, source='web'):
         print(f"Database error: {str(e)}")
 
 def extract_keywords(text):
-    """Extract key terms from message for search"""
+    """Extract key terms with importance weighting"""
     import re
     
-    # Remove common words and extract meaningful terms
+    # Enhanced stop words
     stop_words = {
         'の', 'に', 'は', 'を', 'が', 'で', 'と', 'て', 'だ', 'である', 'です', 'ます',
         'から', 'まで', 'より', 'について', 'という', 'こと', 'もの', 'これ', 'それ',
-        'あれ', 'どう', 'なぜ', 'いつ', 'どこ', 'だれ', 'なに', 'どの', 'どんな',
+        'あれ', 'どう', 'なぜ', 'いつ', 'どこ', 'だれ', 'なに', 'どの', 'どんな', 'する', 
+        'した', 'して', 'される', 'できる', 'できた', 'ある', 'あった', 'なる', 'なった',
         'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
-        'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has'
+        'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has',
+        'do', 'did', 'does', 'will', 'would', 'could', 'should', 'may', 'might'
     }
     
-    # Extract words (both Japanese and English)
+    # Extract words with context
     words = re.findall(r'[ぁ-んァ-ン一-龯a-zA-Z0-9]+', text)
     
-    # Filter out stop words and short words
-    keywords = [word for word in words 
-                if len(word) > 1 and word.lower() not in stop_words]
+    # Weight keywords by length and frequency
+    keyword_counts = {}
+    for word in words:
+        if len(word) > 1 and word.lower() not in stop_words:
+            keyword_counts[word] = keyword_counts.get(word, 0) + 1
     
-    return list(set(keywords))  # Remove duplicates
+    # Sort by importance: longer words and higher frequency first
+    sorted_keywords = sorted(keyword_counts.items(), 
+                           key=lambda x: (len(x[0]), x[1]), reverse=True)
+    
+    return [kw[0] for kw in sorted_keywords[:8]]  # Return top 8 weighted keywords
 
-def search_related_conversations(user_id, current_message, limit=10):
-    """Search for conversations related to current message keywords"""
+def search_related_conversations(user_id, current_message, limit=8):
+    """Search with relevance scoring and smart deduplication"""
     if not supabase:
         return []
     
@@ -92,46 +100,49 @@ def search_related_conversations(user_id, current_message, limit=10):
         if not keywords:
             return []
         
-        # Search for conversations containing any of the keywords
-        related_conversations = []
+        # Collect all matches with relevance scoring
+        conversation_scores = {}
         
-        for keyword in keywords[:5]:  # Limit to top 5 keywords to avoid too many queries
+        for i, keyword in enumerate(keywords[:6]):  # Top 6 keywords
             try:
-                # Search in both message and response fields
-                message_matches = supabase.table('conversations')\
+                # Single query searching both fields
+                matches = supabase.table('conversations')\
                     .select('message, response, created_at')\
                     .eq('user_id', user_id or 'anonymous')\
-                    .ilike('message', f'%{keyword}%')\
+                    .or_(f'message.ilike.%{keyword}%,response.ilike.%{keyword}%')\
                     .order('created_at', desc=True)\
-                    .limit(3)\
+                    .limit(20)\
                     .execute()
                 
-                response_matches = supabase.table('conversations')\
-                    .select('message, response, created_at')\
-                    .eq('user_id', user_id or 'anonymous')\
-                    .ilike('response', f'%{keyword}%')\
-                    .order('created_at', desc=True)\
-                    .limit(3)\
-                    .execute()
+                # Score each conversation
+                keyword_weight = 1.0 / (i + 1)  # Higher weight for earlier keywords
                 
-                related_conversations.extend(message_matches.data)
-                related_conversations.extend(response_matches.data)
-                
+                for conv in matches.data:
+                    conv_id = conv['created_at']
+                    if conv_id not in conversation_scores:
+                        conversation_scores[conv_id] = {
+                            'conversation': conv,
+                            'score': 0,
+                            'matched_keywords': set()
+                        }
+                    
+                    # Count keyword occurrences in both message and response
+                    msg_count = conv['message'].lower().count(keyword.lower())
+                    resp_count = conv['response'].lower().count(keyword.lower())
+                    
+                    # Add weighted score
+                    conversation_scores[conv_id]['score'] += (msg_count + resp_count) * keyword_weight
+                    conversation_scores[conv_id]['matched_keywords'].add(keyword)
+                    
             except Exception as e:
                 print(f"Keyword search error for '{keyword}': {str(e)}")
                 continue
         
-        # Remove duplicates based on created_at timestamp
-        seen = set()
-        unique_conversations = []
-        for conv in related_conversations:
-            if conv['created_at'] not in seen:
-                seen.add(conv['created_at'])
-                unique_conversations.append(conv)
+        # Sort by relevance score and return top conversations
+        sorted_convs = sorted(conversation_scores.values(), 
+                            key=lambda x: x['score'], reverse=True)
         
-        # Sort by relevance (most recent first) and limit results
-        unique_conversations.sort(key=lambda x: x['created_at'], reverse=True)
-        return unique_conversations[:limit]
+        return [item['conversation'] for item in sorted_convs[:limit]]
         
     except Exception as e:
         print(f"Related conversation search error: {str(e)}")
@@ -204,62 +215,75 @@ def search_knowledge_base(query, limit=5):
         return []
 
 def generate_context_aware_response(message, user_id='anonymous'):
-    """Generate response with comprehensive context from multiple sources"""
+    """Generate response with adaptive context weighting"""
     context_parts = []
     
     # 1. Get recent conversation history (immediate context)
-    recent_history = get_conversation_history(user_id, 3)
+    recent_history = get_conversation_history(user_id, 4)
     
-    # 2. Search for related conversations based on keywords
-    related_conversations = search_related_conversations(user_id, message, 5)
+    # 2. Search for related conversations with relevance scoring
+    related_conversations = search_related_conversations(user_id, message, 6)
     
     # 3. Search knowledge base for relevant information
-    knowledge = search_knowledge_base(message, 3)
+    knowledge = search_knowledge_base(message, 4)
     
-    # Build comprehensive context
+    # Adaptive context building based on available data
+    total_context_items = len(recent_history) + len(related_conversations) + len(knowledge)
+    
     if recent_history:
-        context_parts.append("直近の会話:")
-        for conv in reversed(recent_history):
-            context_parts.append(f"ユーザー: {conv['message']}")
-            context_parts.append(f"AI: {conv['response'][:150]}...")
+        context_parts.append("【直近の対話履歴】")
+        for i, conv in enumerate(reversed(recent_history)):
+            # Show more detail for more recent conversations
+            detail_length = 200 if i < 2 else 120
+            context_parts.append(f"Q{i+1}: {conv['message']}")
+            context_parts.append(f"A{i+1}: {conv['response'][:detail_length]}{'...' if len(conv['response']) > detail_length else ''}")
     
     if related_conversations:
-        context_parts.append("\n関連する過去の会話:")
-        # Remove recent conversations from related to avoid duplication
+        # Filter out recent conversations to avoid duplication
         recent_times = {conv['created_at'] for conv in recent_history} if recent_history else set()
-        
         unique_related = [conv for conv in related_conversations 
-                         if conv['created_at'] not in recent_times][:4]
+                         if conv['created_at'] not in recent_times]
         
-        for conv in unique_related:
-            context_parts.append(f"過去の質問: {conv['message'][:100]}")
-            context_parts.append(f"過去の回答: {conv['response'][:150]}...")
+        if unique_related:
+            context_parts.append("\n【関連する過去の経験】")
+            for i, conv in enumerate(unique_related[:5]):  # Top 5 most relevant
+                context_parts.append(f"関連事例{i+1}: {conv['message'][:80]}")
+                context_parts.append(f"当時の対応: {conv['response'][:120]}...")
     
     if knowledge:
-        context_parts.append("\n関連する知識・情報:")
-        for kb in knowledge:
-            context_parts.append(f"・{kb['title']}: {kb['content'][:150]}...")
+        context_parts.append("\n【蓄積された専門知識】")
+        for i, kb in enumerate(knowledge):
+            context_parts.append(f"知識{i+1}: {kb['title']}")
+            context_parts.append(f"内容: {kb['content'][:180]}{'...' if len(kb['content']) > 180 else ''}")
     
-    # Build enhanced message with context
+    # Build enhanced message with adaptive prompting
     if context_parts:
         context = "\n".join(context_parts)
-        enhanced_message = f"""あなたはベテランAIアドバイザーです。以下の過去の会話履歴、関連する過去のやり取り、および蓄積された知識を踏まえて、継続性のある的確なアドバイスをしてください。
+        context_strength = "豊富な" if total_context_items > 8 else "適切な" if total_context_items > 4 else "限定的な"
+        
+        enhanced_message = f"""あなたは経験豊富なベテランAIアドバイザーです。以下の{context_strength}過去データを活用して、継続性と専門性のある回答をしてください。
 
-【参考情報】
 {context}
 
-【現在の質問】
+【現在の相談内容】
+{message}
+
+【回答指針】
+1. 過去の対話パターンを踏まえた一貫性のある回答
+2. 関連する過去事例があれば具体的に参照して説明
+3. 蓄積された知識を実践的に活用
+4. ベテランらしい深い洞察と具体的なアドバイス
+5. 必要に応じて過去の成功/失敗パターンから学んだ教訓を含める"""
+    else:
+        enhanced_message = f"""あなたは経験豊富なベテランAIアドバイザーです。過去データは限られていますが、ベテランとしての知見を活かして的確なアドバイスをしてください。
+
+【相談内容】
 {message}
 
 【回答方針】
-- 過去の文脈を理解した上で回答する
-- 関連する過去のやり取りがあれば言及する
-- 蓄積された知識を活用して具体的にアドバイスする
-- 一貫性のあるベテランとしての視点を保つ"""
-    else:
-        enhanced_message = f"""あなたはベテランAIアドバイザーです。以下の質問に対して、経験豊富なベテランとして的確なアドバイスをしてください。
-
-{message}"""
+- 一般的なベストプラクティスを踏まえた実践的なアドバイス
+- 潜在的なリスクや注意点も含めた包括的な視点
+- 具体的で行動につながる提案"""
     
     return enhanced_message
 
