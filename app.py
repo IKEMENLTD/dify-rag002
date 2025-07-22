@@ -81,6 +81,7 @@ def test_page():
         
         <h2>テスト送信</h2>
         <button onclick="testAPI()">APIテスト実行</button>
+        <button onclick="testDifyDirect()">Dify直接テスト</button>
         <div id="result"></div>
         
         <script>
@@ -99,6 +100,24 @@ def test_page():
                     result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
                 }} catch (error) {{
                     result.innerHTML = 'エラー: ' + error.message;
+                }}
+            }}
+            
+            async function testDifyDirect() {{
+                const result = document.getElementById('result');
+                result.innerHTML = 'Difyテスト中...';
+                
+                try {{
+                    const response = await fetch('/api/dify-test', {{
+                        method: 'POST',
+                        headers: {{'Content-Type': 'application/json'}},
+                        body: JSON.stringify({{message: 'テスト'}})
+                    }});
+                    
+                    const data = await response.json();
+                    result.innerHTML = '<h3>Dify直接テスト結果:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }} catch (error) {{
+                    result.innerHTML = 'Dify直接テストエラー: ' + error.message;
                 }}
             }}
         </script>
@@ -253,6 +272,62 @@ def api_chat():
         return jsonify({'response': response})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/dify-test', methods=['POST'])
+def dify_direct_test():
+    """Direct Dify API test with detailed response"""
+    try:
+        data = request.get_json()
+        message = data.get('message', 'Hello')
+        
+        dify_api_key = os.getenv('DIFY_API_KEY')
+        if not dify_api_key:
+            return jsonify({'error': 'Dify API key not found'})
+        
+        headers = {
+            'Authorization': f'Bearer {dify_api_key}',
+            'Content-Type': 'application/json'
+        }
+        payload = {
+            'inputs': {},
+            'query': message,
+            'response_mode': 'blocking',
+            'conversation_id': '',
+            'user': 'test-user'
+        }
+        
+        # Test chat-messages endpoint
+        chat_resp = requests.post(
+            'https://api.dify.ai/v1/chat-messages',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        # Test completion-messages endpoint
+        completion_resp = requests.post(
+            'https://api.dify.ai/v1/completion-messages',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        return jsonify({
+            'chat_endpoint': {
+                'status_code': chat_resp.status_code,
+                'response': chat_resp.text[:500],
+                'success': chat_resp.status_code == 200
+            },
+            'completion_endpoint': {
+                'status_code': completion_resp.status_code,
+                'response': completion_resp.text[:500],
+                'success': completion_resp.status_code == 200
+            },
+            'api_key_prefix': dify_api_key[:10] + '...'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/webhook/line', methods=['POST'])
 def line_webhook():
