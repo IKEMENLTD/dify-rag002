@@ -230,7 +230,11 @@ def api_chat():
                     print(f"Dify response: {response[:100]}")
                 else:
                     print(f"Dify error response: {resp.text[:200]}")
-                    response = f"Dify APIエラー ({resp.status_code}): {resp.text[:100]}"
+                    # Fallback to simple response for now
+                    if resp.status_code == 400:
+                        response = f"申し訳ございません。現在AIサービスが利用できません。メッセージ: {message}"
+                    else:
+                        response = f"Dify APIエラー ({resp.status_code}): {resp.text[:100]}"
             except Exception as e:
                 print(f"Dify API error: {str(e)}")
                 response = f"Dify APIエラー: {str(e)[:100]}"
