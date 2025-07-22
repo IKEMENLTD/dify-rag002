@@ -10,24 +10,49 @@ CORS(app)
 
 def clean_response(text):
     """Remove thinking tags and clean up the response"""
+    print(f"[DEBUG] clean_response INPUT: {repr(text)}")
+    
     if not text:
+        print("[DEBUG] Text is empty, returning as-is")
         return text
     
-    # Remove <think>...</think> tags and their content (case insensitive)
-    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    original_text = text
     
-    # Basic formatting improvements for readability
+    # Step 1: Remove <think>...</think> tags and their content (case insensitive)
+    think_pattern = r'<think>.*?</think>'
+    think_matches = re.findall(think_pattern, text, flags=re.DOTALL | re.IGNORECASE)
+    print(f"[DEBUG] Found {len(think_matches)} <think> tags")
+    for i, match in enumerate(think_matches):
+        print(f"[DEBUG] <think> tag {i+1}: {repr(match[:100])}...")
+    
+    text = re.sub(think_pattern, '', text, flags=re.DOTALL | re.IGNORECASE)
+    print(f"[DEBUG] After removing <think> tags: {repr(text[:200])}...")
+    
+    # Step 2: Basic formatting improvements for readability
     # Add line breaks after key punctuation for better readability
+    before_formatting = text
     text = text.replace('。 ', '。\n\n')  # Period + space -> Period + double newline
     text = text.replace('？ ', '？\n\n')  # Question + space -> Question + double newline  
     text = text.replace('！ ', '！\n\n')  # Exclamation + space -> Exclamation + double newline
     text = text.replace('【', '\n\n【')   # Section headers
     text = text.replace('▼', '\n\n▼')    # Subsection markers
     
-    # Clean up excessive whitespace
+    formatting_changed = before_formatting != text
+    print(f"[DEBUG] Formatting changed: {formatting_changed}")
+    if formatting_changed:
+        print(f"[DEBUG] After formatting: {repr(text[:200])}...")
+    
+    # Step 3: Clean up excessive whitespace
+    before_whitespace = text
     text = re.sub(r'[ \t]+', ' ', text)      # Multiple spaces/tabs to single space
     text = re.sub(r'\n{3,}', '\n\n', text)   # Multiple newlines to double
     text = text.strip()
+    
+    whitespace_changed = before_whitespace != text
+    print(f"[DEBUG] Whitespace cleanup changed: {whitespace_changed}")
+    
+    print(f"[DEBUG] clean_response OUTPUT: {repr(text)}")
+    print(f"[DEBUG] Original length: {len(original_text)}, Final length: {len(text)}")
     
     return text
 
@@ -187,25 +212,36 @@ def chat():
                 const message = input.value.trim();
                 if (!message) return;
                 
-                console.log('Sending message:', message);
+                console.log('[CLIENT DEBUG] Sending message:', message);
                 addMessage(message, 'user');
                 input.value = '';
+                
+                const requestBody = {message: message};
+                console.log('[CLIENT DEBUG] Request body:', requestBody);
                 
                 fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: message})
+                    body: JSON.stringify(requestBody)
                 })
                 .then(response => {
-                    console.log('Response status:', response.status);
+                    console.log('[CLIENT DEBUG] Response status:', response.status);
+                    console.log('[CLIENT DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Response data:', data);
-                    addMessage(data.response || 'エラーが発生しました', 'assistant');
+                    console.log('[CLIENT DEBUG] Raw response data:', data);
+                    console.log('[CLIENT DEBUG] Response type:', typeof data.response);
+                    console.log('[CLIENT DEBUG] Response length:', data.response ? data.response.length : 'N/A');
+                    console.log('[CLIENT DEBUG] Response content preview:', data.response ? data.response.substring(0, 100) : 'N/A');
+                    
+                    const finalResponse = data.response || 'エラーが発生しました';
+                    console.log('[CLIENT DEBUG] Final response to display:', finalResponse);
+                    
+                    addMessage(finalResponse, 'assistant');
                 })
                 .catch(error => {
-                    console.error('Fetch error:', error);
+                    console.error('[CLIENT DEBUG] Fetch error:', error);
                     addMessage('通信エラーが発生しました', 'assistant');
                 });
             }
@@ -279,11 +315,23 @@ def api_chat():
                 print(f"Dify response status: {resp.status_code}")
                 
                 if resp.status_code == 200:
-                    data = resp.json()
-                    raw_response = data.get('answer', response)
-                    response = clean_response(raw_response)
-                    print(f"Dify response (raw): {raw_response[:100]}")
-                    print(f"Dify response (cleaned): {response[:100]}")
+                    print(f"[DEBUG] Raw Dify API response: {resp.text[:500]}...")
+                    
+                    try:
+                        data = resp.json()
+                        print(f"[DEBUG] Parsed JSON keys: {list(data.keys())}")
+                        print(f"[DEBUG] JSON data structure: {str(data)[:300]}...")
+                        
+                        raw_response = data.get('answer', response)
+                        print(f"[DEBUG] Raw answer extracted: {repr(raw_response)}")
+                        print(f"[DEBUG] Raw answer type: {type(raw_response)}")
+                        
+                        response = clean_response(raw_response)
+                        
+                        print(f"[DEBUG] Final response sent to user: {repr(response)}")
+                    except Exception as e:
+                        print(f"[DEBUG] JSON parsing error: {str(e)}")
+                        response = f"JSON解析エラー: {str(e)}"
                 else:
                     print(f"Dify error response: {resp.text[:200]}")
                     # Parse error for better user feedback
