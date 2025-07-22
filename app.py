@@ -201,38 +201,8 @@ def api_chat():
         if not dify_api_key and not anthropic_key:
             response = "APIキーが設定されていません。環境変数を確認してください。"
         
-        # Temporarily skip Dify and use Claude directly for testing
-        if anthropic_key:
-            try:
-                print("Using Claude API directly")
-                claude_headers = {
-                    'x-api-key': anthropic_key,
-                    'anthropic-version': '2023-06-01',
-                    'content-type': 'application/json'
-                }
-                claude_payload = {
-                    'model': 'claude-3-sonnet-20240229',
-                    'messages': [{'role': 'user', 'content': message}],
-                    'max_tokens': 1000
-                }
-                claude_resp = requests.post(
-                    'https://api.anthropic.com/v1/messages',
-                    headers=claude_headers,
-                    json=claude_payload,
-                    timeout=30
-                )
-                print(f"Claude API response status: {claude_resp.status_code}")
-                if claude_resp.status_code == 200:
-                    claude_data = claude_resp.json()
-                    response = claude_data['content'][0]['text']
-                else:
-                    response = f"Claude APIエラー ({claude_resp.status_code}): {claude_resp.text[:100]}"
-            except Exception as e:
-                print(f"Claude API error: {str(e)}")
-                response = f"Claude APIエラー: {str(e)[:100]}"
-        
-        elif dify_api_key:
-            # Original Dify code (currently disabled for testing)
+        # Try Dify first
+        if dify_api_key:
             try:
                 headers = {
                     'Authorization': f'Bearer {dify_api_key}',
@@ -245,17 +215,22 @@ def api_chat():
                     'conversation_id': '',
                     'user': 'web-user'
                 }
+                print(f"Calling Dify API...")
                 resp = requests.post(
                     'https://api.dify.ai/v1/completion-messages',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
+                print(f"Dify response status: {resp.status_code}")
+                
                 if resp.status_code == 200:
                     data = resp.json()
                     response = data.get('answer', response)
+                    print(f"Dify response: {response[:100]}")
                 else:
-                    response = f"Dify APIエラー ({resp.status_code})"
+                    print(f"Dify error response: {resp.text[:200]}")
+                    response = f"Dify APIエラー ({resp.status_code}): {resp.text[:100]}"
             except Exception as e:
                 print(f"Dify API error: {str(e)}")
                 response = f"Dify APIエラー: {str(e)[:100]}"
