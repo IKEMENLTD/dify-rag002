@@ -260,11 +260,17 @@ def api_chat():
                     print(f"Dify response: {response[:100]}")
                 else:
                     print(f"Dify error response: {resp.text[:200]}")
-                    # Fallback to simple response for now
-                    if resp.status_code == 400:
-                        response = f"申し訳ございません。現在AIサービスが利用できません。メッセージ: {message}"
-                    else:
-                        response = f"Dify APIエラー ({resp.status_code}): {resp.text[:100]}"
+                    # Parse error for better user feedback
+                    try:
+                        error_data = resp.json()
+                        if 'anthropic' in error_data.get('message', '').lower():
+                            response = f"🔧 AI設定エラーです。Difyでモデル設定を確認してください。メッセージ: {message}"
+                        elif 'app_unavailable' in error_data.get('code', ''):
+                            response = f"🔧 アプリが公開状態ではありません。Difyで公開設定を確認してください。メッセージ: {message}"
+                        else:
+                            response = f"🤖 一時的にサービスが利用できません。メッセージ: {message}"
+                    except:
+                        response = f"🤖 一時的にサービスが利用できません。メッセージ: {message}"
             except Exception as e:
                 print(f"Dify API error: {str(e)}")
                 response = f"Dify APIエラー: {str(e)[:100]}"
