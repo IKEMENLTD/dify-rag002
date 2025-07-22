@@ -8,6 +8,9 @@ import re
 from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +22,16 @@ CORS(app)
 supabase_url = os.getenv('SUPABASE_URL')
 supabase_key = os.getenv('SUPABASE_KEY')
 supabase: Client = create_client(supabase_url, supabase_key) if supabase_url and supabase_key else None
+
+# Initialize LINE Bot API
+line_bot_api = None
+line_handler = None
+line_access_token = os.getenv('LINE_ACCESS_TOKEN')
+line_secret = os.getenv('LINE_SECRET')
+
+if line_access_token and line_secret:
+    line_bot_api = LineBotApi(line_access_token)
+    line_handler = WebhookHandler(line_secret)
 
 def clean_response(text):
     """Remove thinking tags and clean up the response"""
@@ -694,8 +707,15 @@ def line_webhook():
                                 # Save LINE conversation
                                 save_conversation(f"line_{user_id}", clean_message, response, 'line')
                                 
-                                # Here you would send the response back to LINE
-                                # This requires LINE Bot SDK and proper setup
+                                # Send response back to LINE
+                                if line_bot_api:
+                                    try:
+                                        line_bot_api.reply_message(
+                                            event.get('replyToken'),
+                                            TextSendMessage(text=response)
+                                        )
+                                    except Exception as e:
+                                        print(f"Failed to send LINE reply: {str(e)}")
                                 
                         except Exception as e:
                             print(f"Error processing LINE message: {str(e)}")
