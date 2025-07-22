@@ -60,8 +60,85 @@ def save_conversation(user_id, message, response, source='web'):
     except Exception as e:
         print(f"Database error: {str(e)}")
 
-def get_conversation_history(user_id, limit=10):
-    """Get recent conversation history for context"""
+def extract_keywords(text):
+    """Extract key terms from message for search"""
+    import re
+    
+    # Remove common words and extract meaningful terms
+    stop_words = {
+        'の', 'に', 'は', 'を', 'が', 'で', 'と', 'て', 'だ', 'である', 'です', 'ます',
+        'から', 'まで', 'より', 'について', 'という', 'こと', 'もの', 'これ', 'それ',
+        'あれ', 'どう', 'なぜ', 'いつ', 'どこ', 'だれ', 'なに', 'どの', 'どんな',
+        'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of',
+        'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has'
+    }
+    
+    # Extract words (both Japanese and English)
+    words = re.findall(r'[ぁ-んァ-ン一-龯a-zA-Z0-9]+', text)
+    
+    # Filter out stop words and short words
+    keywords = [word for word in words 
+                if len(word) > 1 and word.lower() not in stop_words]
+    
+    return list(set(keywords))  # Remove duplicates
+
+def search_related_conversations(user_id, current_message, limit=10):
+    """Search for conversations related to current message keywords"""
+    if not supabase:
+        return []
+    
+    try:
+        keywords = extract_keywords(current_message)
+        if not keywords:
+            return []
+        
+        # Search for conversations containing any of the keywords
+        related_conversations = []
+        
+        for keyword in keywords[:5]:  # Limit to top 5 keywords to avoid too many queries
+            try:
+                # Search in both message and response fields
+                message_matches = supabase.table('conversations')\
+                    .select('message, response, created_at')\
+                    .eq('user_id', user_id or 'anonymous')\
+                    .ilike('message', f'%{keyword}%')\
+                    .order('created_at', desc=True)\
+                    .limit(3)\
+                    .execute()
+                
+                response_matches = supabase.table('conversations')\
+                    .select('message, response, created_at')\
+                    .eq('user_id', user_id or 'anonymous')\
+                    .ilike('response', f'%{keyword}%')\
+                    .order('created_at', desc=True)\
+                    .limit(3)\
+                    .execute()
+                
+                related_conversations.extend(message_matches.data)
+                related_conversations.extend(response_matches.data)
+                
+            except Exception as e:
+                print(f"Keyword search error for '{keyword}': {str(e)}")
+                continue
+        
+        # Remove duplicates based on created_at timestamp
+        seen = set()
+        unique_conversations = []
+        for conv in related_conversations:
+            if conv['created_at'] not in seen:
+                seen.add(conv['created_at'])
+                unique_conversations.append(conv)
+        
+        # Sort by relevance (most recent first) and limit results
+        unique_conversations.sort(key=lambda x: x['created_at'], reverse=True)
+        return unique_conversations[:limit]
+        
+    except Exception as e:
+        print(f"Related conversation search error: {str(e)}")
+        return []
+
+def get_conversation_history(user_id, limit=5):
+    """Get recent conversation history for immediate context"""
     if not supabase:
         return []
     
@@ -78,54 +155,111 @@ def get_conversation_history(user_id, limit=10):
         return []
 
 def search_knowledge_base(query, limit=5):
-    """Search knowledge base for relevant information"""
+    """Search knowledge base for relevant information using keywords"""
     if not supabase:
         return []
     
     try:
-        # Simple text search in knowledge_base table
-        response = supabase.table('knowledge_base')\
-            .select('title, content, tags')\
-            .ilike('content', f'%{query}%')\
-            .limit(limit)\
-            .execute()
-        return response.data
+        keywords = extract_keywords(query)
+        if not keywords:
+            return []
+        
+        knowledge_results = []
+        
+        for keyword in keywords[:3]:  # Limit to top 3 keywords
+            try:
+                # Search in title and content
+                title_matches = supabase.table('knowledge_base')\
+                    .select('title, content, tags, created_at')\
+                    .ilike('title', f'%{keyword}%')\
+                    .limit(2)\
+                    .execute()
+                
+                content_matches = supabase.table('knowledge_base')\
+                    .select('title, content, tags, created_at')\
+                    .ilike('content', f'%{keyword}%')\
+                    .limit(2)\
+                    .execute()
+                
+                knowledge_results.extend(title_matches.data)
+                knowledge_results.extend(content_matches.data)
+                
+            except Exception as e:
+                print(f"Knowledge search error for '{keyword}': {str(e)}")
+                continue
+        
+        # Remove duplicates
+        seen = set()
+        unique_knowledge = []
+        for kb in knowledge_results:
+            key = f"{kb['title']}_{kb.get('created_at', '')}"
+            if key not in seen:
+                seen.add(key)
+                unique_knowledge.append(kb)
+        
+        return unique_knowledge[:limit]
+        
     except Exception as e:
-        print(f"Database error: {str(e)}")
+        print(f"Knowledge base search error: {str(e)}")
         return []
 
 def generate_context_aware_response(message, user_id='anonymous'):
-    """Generate response with context from conversation history and knowledge base"""
-    # Get conversation history for context
-    history = get_conversation_history(user_id, 5)
-    
-    # Search knowledge base for relevant information
-    knowledge = search_knowledge_base(message, 3)
-    
-    # Build context for Dify
+    """Generate response with comprehensive context from multiple sources"""
     context_parts = []
     
-    if history:
-        context_parts.append("過去の会話履歴:")
-        for conv in reversed(history):  # Reverse to show chronological order
+    # 1. Get recent conversation history (immediate context)
+    recent_history = get_conversation_history(user_id, 3)
+    
+    # 2. Search for related conversations based on keywords
+    related_conversations = search_related_conversations(user_id, message, 5)
+    
+    # 3. Search knowledge base for relevant information
+    knowledge = search_knowledge_base(message, 3)
+    
+    # Build comprehensive context
+    if recent_history:
+        context_parts.append("直近の会話:")
+        for conv in reversed(recent_history):
             context_parts.append(f"ユーザー: {conv['message']}")
-            context_parts.append(f"AI: {conv['response']}")
+            context_parts.append(f"AI: {conv['response'][:150]}...")
+    
+    if related_conversations:
+        context_parts.append("\n関連する過去の会話:")
+        # Remove recent conversations from related to avoid duplication
+        recent_times = {conv['created_at'] for conv in recent_history} if recent_history else set()
+        
+        unique_related = [conv for conv in related_conversations 
+                         if conv['created_at'] not in recent_times][:4]
+        
+        for conv in unique_related:
+            context_parts.append(f"過去の質問: {conv['message'][:100]}")
+            context_parts.append(f"過去の回答: {conv['response'][:150]}...")
     
     if knowledge:
-        context_parts.append("関連情報:")
+        context_parts.append("\n関連する知識・情報:")
         for kb in knowledge:
-            context_parts.append(f"・{kb['title']}: {kb['content'][:100]}...")
+            context_parts.append(f"・{kb['title']}: {kb['content'][:150]}...")
     
-    # Combine context with current message
+    # Build enhanced message with context
     if context_parts:
         context = "\n".join(context_parts)
-        enhanced_message = f"""以下の過去の情報と関連データを踏まえて、ベテランとして的確なアドバイスをしてください。
+        enhanced_message = f"""あなたはベテランAIアドバイザーです。以下の過去の会話履歴、関連する過去のやり取り、および蓄積された知識を踏まえて、継続性のある的確なアドバイスをしてください。
 
+【参考情報】
 {context}
 
-現在の質問: {message}"""
+【現在の質問】
+{message}
+
+【回答方針】
+- 過去の文脈を理解した上で回答する
+- 関連する過去のやり取りがあれば言及する
+- 蓄積された知識を活用して具体的にアドバイスする
+- 一貫性のあるベテランとしての視点を保つ"""
     else:
-        enhanced_message = message
+        enhanced_message = f"""あなたはベテランAIアドバイザーです。以下の質問に対して、経験豊富なベテランとして的確なアドバイスをしてください。
+
+{message}"""
     
     return enhanced_message
 
@@ -393,9 +527,23 @@ def api_chat():
             except Exception as e:
                 response = f"Dify APIエラー: {str(e)[:100]}"
         
+        # Provide context information for UI
+        context_info = []
+        recent_count = len(get_conversation_history(user_id, 3))
+        related_count = len(search_related_conversations(user_id, message, 5))
+        knowledge_count = len(search_knowledge_base(message, 3))
+        
+        if recent_count > 0:
+            context_info.append(f"直近{recent_count}件")
+        if related_count > 0:
+            context_info.append(f"関連{related_count}件") 
+        if knowledge_count > 0:
+            context_info.append(f"知識{knowledge_count}件")
+        
         return jsonify({
             'response': response,
-            'has_context': len(enhanced_message) > len(message)  # Indicate if context was used
+            'has_context': len(enhanced_message) > len(message),
+            'context_info': "、".join(context_info) if context_info else None
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
