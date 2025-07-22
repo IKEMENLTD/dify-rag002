@@ -27,6 +27,7 @@ def home():
         </div>
         <p><a href="/ping">Ping Test</a></p>
         <p><a href="/chat">チャット</a></p>
+        <p><a href="/api/status">API Status</a></p>
     </body>
     </html>
     """
@@ -82,6 +83,7 @@ def chat():
                 const message = input.value.trim();
                 if (!message) return;
                 
+                console.log('Sending message:', message);
                 addMessage(message, 'user');
                 input.value = '';
                 
@@ -90,11 +92,16 @@ def chat():
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({message: message})
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Response data:', data);
                     addMessage(data.response || 'エラーが発生しました', 'assistant');
                 })
                 .catch(error => {
+                    console.error('Fetch error:', error);
                     addMessage('通信エラーが発生しました', 'assistant');
                 });
             }
@@ -118,12 +125,17 @@ def api_chat():
         data = request.get_json()
         message = data.get('message', '')
         
+        print(f"Received message: {message}")
+        
         # Default response
         response = f"受信しました: {message}"
         
         # Debug: Check environment variables
         dify_api_key = os.getenv('DIFY_API_KEY')
         anthropic_key = os.getenv('ANTHROPIC_API_KEY')
+        
+        print(f"Dify API Key exists: {bool(dify_api_key)}")
+        print(f"Anthropic API Key exists: {bool(anthropic_key)}")
         
         if not dify_api_key and not anthropic_key:
             response = "APIキーが設定されていません。環境変数を確認してください。"
@@ -142,12 +154,16 @@ def api_chat():
                 }
                 
                 # Use completion-messages endpoint instead
+                print(f"Calling Dify API with payload: {payload}")
                 resp = requests.post(
                     'https://api.dify.ai/v1/completion-messages',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
+                
+                print(f"Dify API response status: {resp.status_code}")
+                print(f"Dify API response: {resp.text[:200]}")
                 
                 if resp.status_code == 200:
                     data = resp.json()
