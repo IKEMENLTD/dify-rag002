@@ -13,11 +13,20 @@ def clean_response(text):
     if not text:
         return text
     
-    # Remove <think>...</think> tags and their content
-    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    # Remove <think>...</think> tags and their content (case insensitive)
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
     
-    # Remove extra whitespace and newlines
-    text = re.sub(r'\n+', '\n', text)
+    # Basic formatting improvements for readability
+    # Add line breaks after key punctuation for better readability
+    text = text.replace('。 ', '。\n\n')  # Period + space -> Period + double newline
+    text = text.replace('？ ', '？\n\n')  # Question + space -> Question + double newline  
+    text = text.replace('！ ', '！\n\n')  # Exclamation + space -> Exclamation + double newline
+    text = text.replace('【', '\n\n【')   # Section headers
+    text = text.replace('▼', '\n\n▼')    # Subsection markers
+    
+    # Clean up excessive whitespace
+    text = re.sub(r'[ \t]+', ' ', text)      # Multiple spaces/tabs to single space
+    text = re.sub(r'\n{3,}', '\n\n', text)   # Multiple newlines to double
     text = text.strip()
     
     return text
