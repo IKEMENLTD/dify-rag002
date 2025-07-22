@@ -216,12 +216,23 @@ def api_chat():
                     'user': 'web-user'
                 }
                 print(f"Calling Dify API...")
+                # Try chat-messages first (for chatbots)
                 resp = requests.post(
-                    'https://api.dify.ai/v1/completion-messages',
+                    'https://api.dify.ai/v1/chat-messages',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
+                
+                # If chat-messages fails, try completion-messages (for text generation)
+                if resp.status_code != 200:
+                    print(f"Chat endpoint failed ({resp.status_code}), trying completion endpoint...")
+                    resp = requests.post(
+                        'https://api.dify.ai/v1/completion-messages',
+                        headers=headers,
+                        json=payload,
+                        timeout=30
+                    )
                 print(f"Dify response status: {resp.status_code}")
                 
                 if resp.status_code == 200:
