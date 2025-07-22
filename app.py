@@ -3,9 +3,24 @@ from flask_cors import CORS
 import os
 import requests
 import json
+import re
 
 app = Flask(__name__)
 CORS(app)
+
+def clean_response(text):
+    """Remove thinking tags and clean up the response"""
+    if not text:
+        return text
+    
+    # Remove <think>...</think> tags and their content
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    
+    # Remove extra whitespace and newlines
+    text = re.sub(r'\n+', '\n', text)
+    text = text.strip()
+    
+    return text
 
 @app.route('/')
 def home():
@@ -256,8 +271,10 @@ def api_chat():
                 
                 if resp.status_code == 200:
                     data = resp.json()
-                    response = data.get('answer', response)
-                    print(f"Dify response: {response[:100]}")
+                    raw_response = data.get('answer', response)
+                    response = clean_response(raw_response)
+                    print(f"Dify response (raw): {raw_response[:100]}")
+                    print(f"Dify response (cleaned): {response[:100]}")
                 else:
                     print(f"Dify error response: {resp.text[:200]}")
                     # Parse error for better user feedback
@@ -337,8 +354,30 @@ def dify_direct_test():
 
 @app.route('/webhook/line', methods=['POST'])
 def line_webhook():
-    """Simple LINE webhook handler"""
-    return 'OK', 200
+    """LINE webhook handler - only responds to messages containing 'ベテランAI'"""
+    try:
+        body = request.get_json()
+        print(f"LINE webhook received: {body}")
+        
+        if not body or 'events' not in body:
+            return 'OK', 200
+        
+        for event in body['events']:
+            if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
+                message_text = event.get('message', {}).get('text', '')
+                
+                # Only respond if message contains "ベテランAI"
+                if 'ベテランAI' in message_text:
+                    print(f"LINE message contains 'ベテランAI': {message_text}")
+                    # Process the message through our chat API
+                    # For now, just log it - actual LINE response would need LINE Bot SDK
+                else:
+                    print(f"LINE message ignored (no 'ベテランAI'): {message_text}")
+        
+        return 'OK', 200
+    except Exception as e:
+        print(f"LINE webhook error: {str(e)}")
+        return 'OK', 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
