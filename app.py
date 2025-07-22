@@ -5,12 +5,17 @@ import os
 import requests
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
+import pytz
+import dateutil.parser
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +37,10 @@ line_secret = os.getenv('LINE_SECRET')
 if line_access_token and line_secret:
     line_bot_api = LineBotApi(line_access_token)
     line_handler = WebhookHandler(line_secret)
+
+# Initialize scheduler for reminders
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 def clean_response(text):
     """Remove thinking tags and clean up the response"""
@@ -299,6 +308,213 @@ def generate_context_aware_response(message, user_id='anonymous'):
 - 具体的で行動につながる提案"""
     
     return enhanced_message
+
+def parse_reminder_message(text):
+    """Parse reminder message like リマインくん"""
+    import re
+    
+    # Remove "リマインダー" trigger word
+    text = text.replace('リマインダー', '').strip()
+    
+    # Patterns for different time formats
+    patterns = [
+        # 毎日 HH:MM format
+        r'毎日\s*(\d{1,2}):(\d{2})\s*(.+)',
+        # 毎日 HH時MM分 format  
+        r'毎日\s*(\d{1,2})時(\d{1,2})分\s*(.+)',
+        # YYYY/MM/DD HH:MM format
+        r'(\d{4})/(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(.+)',
+        # MM/DD HH:MM format (this year)
+        r'(\d{1,2})/(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(.+)',
+        # X日後 HH:MM format
+        r'(\d+)日後\s*(\d{1,2}):(\d{2})\s*(.+)',
+        # Tomorrow HH:MM
+        r'明日\s*(\d{1,2}):(\d{2})\s*(.+)',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            groups = match.groups()
+            
+            if '毎日' in pattern:
+                if ':' in pattern:
+                    # 毎日 HH:MM
+                    hour, minute, content = groups
+                    return {
+                        'type': 'daily',
+                        'hour': int(hour),
+                        'minute': int(minute),
+                        'content': content.strip()
+                    }
+                else:
+                    # 毎日 HH時MM分
+                    hour, minute, content = groups
+                    return {
+                        'type': 'daily',
+                        'hour': int(hour),
+                        'minute': int(minute),
+                        'content': content.strip()
+                    }
+            
+            elif '/' in pattern and len(groups) == 6:
+                # YYYY/MM/DD HH:MM
+                year, month, day, hour, minute, content = groups
+                return {
+                    'type': 'once',
+                    'datetime': f"{year}-{month.zfill(2)}-{day.zfill(2)} {hour.zfill(2)}:{minute}:00",
+                    'content': content.strip()
+                }
+            
+            elif '/' in pattern and len(groups) == 5:
+                # MM/DD HH:MM (this year)
+                month, day, hour, minute, content = groups
+                current_year = datetime.now().year
+                return {
+                    'type': 'once',
+                    'datetime': f"{current_year}-{month.zfill(2)}-{day.zfill(2)} {hour.zfill(2)}:{minute}:00",
+                    'content': content.strip()
+                }
+            
+            elif '日後' in pattern:
+                # X日後 HH:MM
+                days, hour, minute, content = groups
+                target_date = datetime.now() + timedelta(days=int(days))
+                return {
+                    'type': 'once',
+                    'datetime': f"{target_date.strftime('%Y-%m-%d')} {hour.zfill(2)}:{minute}:00",
+                    'content': content.strip()
+                }
+            
+            elif '明日' in pattern:
+                # 明日 HH:MM
+                hour, minute, content = groups
+                tomorrow = datetime.now() + timedelta(days=1)
+                return {
+                    'type': 'once',
+                    'datetime': f"{tomorrow.strftime('%Y-%m-%d')} {hour.zfill(2)}:{minute}:00",
+                    'content': content.strip()
+                }
+    
+    return None
+
+def save_reminder(user_id, reminder_data, source='line'):
+    """Save reminder to database"""
+    if not supabase:
+        return None
+    
+    try:
+        reminder_record = {
+            'user_id': user_id,
+            'content': reminder_data['content'],
+            'reminder_type': reminder_data['type'],
+            'scheduled_time': reminder_data.get('datetime'),
+            'hour': reminder_data.get('hour'),
+            'minute': reminder_data.get('minute'),
+            'source': source,
+            'is_active': True,
+            'created_at': datetime.utcnow().isoformat()
+        }
+        
+        result = supabase.table('reminders').insert(reminder_record).execute()
+        return result.data[0] if result.data else None
+        
+    except Exception as e:
+        print(f"Failed to save reminder: {str(e)}")
+        return None
+
+def schedule_reminder(reminder_id, reminder_data, user_id):
+    """Schedule reminder using APScheduler"""
+    try:
+        jst = pytz.timezone('Asia/Tokyo')
+        
+        if reminder_data['type'] == 'daily':
+            # Daily recurring reminder
+            trigger = CronTrigger(
+                hour=reminder_data['hour'],
+                minute=reminder_data['minute'],
+                timezone=jst
+            )
+            job_id = f"daily_{reminder_id}"
+            
+        elif reminder_data['type'] == 'once':
+            # One-time reminder
+            reminder_time = datetime.fromisoformat(reminder_data['datetime'])
+            reminder_time = jst.localize(reminder_time)
+            
+            trigger = DateTrigger(run_date=reminder_time)
+            job_id = f"once_{reminder_id}"
+        
+        else:
+            return False
+        
+        # Add job to scheduler
+        scheduler.add_job(
+            func=send_reminder,
+            trigger=trigger,
+            id=job_id,
+            args=[user_id, reminder_data['content'], reminder_id],
+            replace_existing=True
+        )
+        
+        return True
+        
+    except Exception as e:
+        print(f"Failed to schedule reminder: {str(e)}")
+        return False
+
+def send_reminder(user_id, content, reminder_id):
+    """Send reminder message to user"""
+    try:
+        if line_bot_api and user_id.startswith('line_'):
+            # Extract actual LINE user ID
+            actual_user_id = user_id.replace('line_', '')
+            
+            reminder_message = f"🔔 リマインダー\n\n{content}\n\n⏰ {datetime.now().strftime('%Y/%m/%d %H:%M')}"
+            
+            # Send push message to user
+            line_bot_api.push_message(
+                actual_user_id,
+                TextSendMessage(text=reminder_message)
+            )
+            
+            print(f"Reminder sent to {user_id}: {content}")
+            
+            # Mark one-time reminders as completed
+            if reminder_id and supabase:
+                try:
+                    supabase.table('reminders')\
+                        .update({'is_active': False, 'completed_at': datetime.utcnow().isoformat()})\
+                        .eq('id', reminder_id)\
+                        .execute()
+                except Exception as e:
+                    print(f"Failed to update reminder status: {str(e)}")
+        
+    except Exception as e:
+        print(f"Failed to send reminder: {str(e)}")
+
+def process_reminder_request(message_text, user_id):
+    """Process reminder request and return response"""
+    reminder_data = parse_reminder_message(message_text)
+    
+    if not reminder_data:
+        return "❌ リマインダーの形式を認識できませんでした。\n\n例:\n・毎日 9:00 薬を飲む\n・12/25 14:30 会議の準備\n・明日 10:00 買い物\n・3日後 15:00 プレゼント準備"
+    
+    # Save to database
+    saved_reminder = save_reminder(user_id, reminder_data)
+    if not saved_reminder:
+        return "❌ リマインダーの保存に失敗しました。"
+    
+    # Schedule the reminder
+    success = schedule_reminder(saved_reminder['id'], reminder_data, user_id)
+    if not success:
+        return "❌ リマインダーのスケジュール設定に失敗しました。"
+    
+    # Generate response message
+    if reminder_data['type'] == 'daily':
+        return f"✅ 毎日のリマインダーを設定しました！\n\n📝 内容: {reminder_data['content']}\n⏰ 時刻: 毎日 {reminder_data['hour']:02d}:{reminder_data['minute']:02d}"
+    else:
+        return f"✅ リマインダーを設定しました！\n\n📝 内容: {reminder_data['content']}\n⏰ 日時: {reminder_data['datetime'].replace('-', '/').replace(' ', ' ')}"
 
 @app.route('/')
 def home():
@@ -669,15 +885,22 @@ def line_webhook():
                     except Exception as e:
                         print(f"Failed to save LINE message: {str(e)}")
                 
-                # Only respond if message contains "ベテランAI"
-                if 'ベテランAI' in message_text:
+                # Process different types of messages
+                reply_text = None
+                
+                # Check for reminder requests
+                if 'リマインダー' in message_text:
+                    reply_text = process_reminder_request(message_text, f"line_{user_id}")
+                
+                # Check for AI chat requests
+                elif 'ベテランAI' in message_text:
                     # Remove "ベテランAI" from message for processing
                     clean_message = message_text.replace('ベテランAI', '').strip()
                     
                     # Process through our enhanced chat API
                     enhanced_message = generate_context_aware_response(clean_message, f"line_{user_id}")
                     
-                    # Get AI response (simplified version of api_chat logic)
+                    # Get AI response
                     dify_api_key = os.getenv('DIFY_API_KEY')
                     if dify_api_key and clean_message:
                         try:
@@ -702,23 +925,24 @@ def line_webhook():
                             
                             if resp.status_code == 200:
                                 data = resp.json()
-                                response = clean_response(data.get('answer', ''))
+                                reply_text = clean_response(data.get('answer', ''))
                                 
                                 # Save LINE conversation
-                                save_conversation(f"line_{user_id}", clean_message, response, 'line')
-                                
-                                # Send response back to LINE
-                                if line_bot_api:
-                                    try:
-                                        line_bot_api.reply_message(
-                                            event.get('replyToken'),
-                                            TextSendMessage(text=response)
-                                        )
-                                    except Exception as e:
-                                        print(f"Failed to send LINE reply: {str(e)}")
+                                save_conversation(f"line_{user_id}", clean_message, reply_text, 'line')
                                 
                         except Exception as e:
+                            reply_text = f"エラーが発生しました: {str(e)[:50]}"
                             print(f"Error processing LINE message: {str(e)}")
+                
+                # Send reply if we have a response
+                if reply_text and line_bot_api:
+                    try:
+                        line_bot_api.reply_message(
+                            event.get('replyToken'),
+                            TextSendMessage(text=reply_text)
+                        )
+                    except Exception as e:
+                        print(f"Failed to send LINE reply: {str(e)}")
         
         return 'OK', 200
     except Exception as e:
@@ -852,6 +1076,77 @@ def import_external_data():
         supabase.table('external_chat_logs').insert(log_data).execute()
         
         return jsonify({'success': True, 'data': result.data})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reminder', methods=['POST'])
+def create_reminder():
+    """Create a new reminder"""
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Process reminder request
+        response = process_reminder_request(f"リマインダー {message}", user_id)
+        
+        return jsonify({
+            'success': True,
+            'response': response
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reminders', methods=['GET'])
+def get_user_reminders():
+    """Get user's active reminders"""
+    try:
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        if not supabase:
+            return jsonify({'error': 'Database not configured'}), 500
+        
+        response = supabase.table('reminders')\
+            .select('*')\
+            .eq('user_id', user_id)\
+            .eq('is_active', True)\
+            .order('created_at', desc=True)\
+            .execute()
+        
+        return jsonify({'reminders': response.data})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reminder/<int:reminder_id>', methods=['DELETE'])
+def delete_reminder(reminder_id):
+    """Delete/deactivate a reminder"""
+    try:
+        if not supabase:
+            return jsonify({'error': 'Database not configured'}), 500
+        
+        # Deactivate reminder in database
+        supabase.table('reminders')\
+            .update({'is_active': False})\
+            .eq('id', reminder_id)\
+            .execute()
+        
+        # Remove from scheduler
+        try:
+            scheduler.remove_job(f"daily_{reminder_id}")
+        except:
+            pass
+        try:
+            scheduler.remove_job(f"once_{reminder_id}")
+        except:
+            pass
+        
+        return jsonify({'success': True, 'message': 'Reminder deleted'})
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
