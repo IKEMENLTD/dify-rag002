@@ -28,6 +28,7 @@ def home():
         <p><a href="/ping">Ping Test</a></p>
         <p><a href="/chat">チャット</a></p>
         <p><a href="/api/status">API Status</a></p>
+        <p><a href="/test">テストページ</a></p>
     </body>
     </html>
     """
@@ -46,6 +47,66 @@ def api_status():
         'dify_key_prefix': os.getenv('DIFY_API_KEY', '')[:10] + '...' if os.getenv('DIFY_API_KEY') else 'Not set',
         'environment': os.getenv('NODE_ENV', 'production')
     })
+
+@app.route('/test')
+def test_page():
+    """Test page to check API configuration"""
+    dify_key = os.getenv('DIFY_API_KEY')
+    claude_key = os.getenv('ANTHROPIC_API_KEY')
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>API Test Page</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 40px; }}
+            .status {{ padding: 10px; margin: 10px 0; border-radius: 5px; }}
+            .ok {{ background: #d4edda; color: #155724; }}
+            .error {{ background: #f8d7da; color: #721c24; }}
+        </style>
+    </head>
+    <body>
+        <h1>🔧 API設定テスト</h1>
+        
+        <div class="status {'ok' if dify_key else 'error'}">
+            Dify API: {'✅ 設定済み' if dify_key else '❌ 未設定'}
+            {f' (Key: {dify_key[:10]}...)' if dify_key else ''}
+        </div>
+        
+        <div class="status {'ok' if claude_key else 'error'}">
+            Claude API: {'✅ 設定済み' if claude_key else '❌ 未設定'}
+            {f' (Key: {claude_key[:15]}...)' if claude_key else ''}
+        </div>
+        
+        <h2>テスト送信</h2>
+        <button onclick="testAPI()">APIテスト実行</button>
+        <div id="result"></div>
+        
+        <script>
+            async function testAPI() {{
+                const result = document.getElementById('result');
+                result.innerHTML = 'テスト中...';
+                
+                try {{
+                    const response = await fetch('/api/chat', {{
+                        method: 'POST',
+                        headers: {{'Content-Type': 'application/json'}},
+                        body: JSON.stringify({{message: 'テストメッセージ'}})
+                    }});
+                    
+                    const data = await response.json();
+                    result.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }} catch (error) {{
+                    result.innerHTML = 'エラー: ' + error.message;
+                }}
+            }}
+        </script>
+        
+        <p><a href="/">ホームに戻る</a></p>
+    </body>
+    </html>
+    """
 
 @app.route('/chat')
 def chat():
