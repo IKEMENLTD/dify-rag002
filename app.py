@@ -107,7 +107,7 @@ def api_chat():
         data = request.get_json()
         message = data.get('message', '')
         
-        # Simple echo for now
+        # Default response
         response = f"受信しました: {message}"
         
         # Try Dify if API key exists
@@ -122,18 +122,50 @@ def api_chat():
                     'inputs': {},
                     'query': message,
                     'response_mode': 'blocking',
+                    'conversation_id': '',
                     'user': 'web-user'
                 }
+                
+                # Use completion-messages endpoint instead
                 resp = requests.post(
-                    'https://api.dify.ai/v1/chat-messages',
+                    'https://api.dify.ai/v1/completion-messages',
                     headers=headers,
                     json=payload,
                     timeout=30
                 )
+                
+                print(f"Dify API Status: {resp.status_code}")
+                print(f"Dify API Response: {resp.text}")
+                
                 if resp.status_code == 200:
-                    response = resp.json().get('answer', response)
-            except:
-                pass
+                    data = resp.json()
+                    response = data.get('answer', response)
+                else:
+                    # Try Claude API as fallback
+                    anthropic_key = os.getenv('ANTHROPIC_API_KEY')
+                    if anthropic_key:
+                        claude_headers = {
+                            'x-api-key': anthropic_key,
+                            'anthropic-version': '2023-06-01',
+                            'content-type': 'application/json'
+                        }
+                        claude_payload = {
+                            'model': 'claude-3-sonnet-20240229',
+                            'messages': [{'role': 'user', 'content': message}],
+                            'max_tokens': 1000
+                        }
+                        claude_resp = requests.post(
+                            'https://api.anthropic.com/v1/messages',
+                            headers=claude_headers,
+                            json=claude_payload,
+                            timeout=30
+                        )
+                        if claude_resp.status_code == 200:
+                            claude_data = claude_resp.json()
+                            response = claude_data['content'][0]['text']
+            except Exception as e:
+                print(f"API Error: {str(e)}")
+                response = f"エラーが発生しました: {str(e)}"
         
         return jsonify({'response': response})
     except Exception as e:
