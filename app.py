@@ -35,6 +35,17 @@ def home():
 def ping():
     return "pong - ベテランAI is alive!"
 
+@app.route('/api/status')
+def api_status():
+    """Check API configuration status"""
+    return jsonify({
+        'status': 'ok',
+        'dify_configured': bool(os.getenv('DIFY_API_KEY')),
+        'claude_configured': bool(os.getenv('ANTHROPIC_API_KEY')),
+        'dify_key_prefix': os.getenv('DIFY_API_KEY', '')[:10] + '...' if os.getenv('DIFY_API_KEY') else 'Not set',
+        'environment': os.getenv('NODE_ENV', 'production')
+    })
+
 @app.route('/chat')
 def chat():
     return """
