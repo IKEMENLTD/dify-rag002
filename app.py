@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from functools import wraps
+import hmac
+import hashlib
+import secrets
+import logging
 import os
 import requests
 import json
@@ -21,7 +26,24 @@ import dateutil.parser
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Security configurations
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', secrets.token_hex(32))
+CORS(app, origins=os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(','))
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Security headers
+@app.after_request
+def security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    return response
 
 # Initialize Supabase client
 supabase_url = os.getenv('SUPABASE_URL')
@@ -41,6 +63,60 @@ if line_access_token and line_secret:
 # Initialize scheduler for reminders
 scheduler = BackgroundScheduler()
 scheduler.start()
+
+# Cleanup on exit
+import atexit
+atexit.register(lambda: scheduler.shutdown())
+
+def validate_input(text, max_length=1000):
+    """Validate and sanitize user input"""
+    if not text or not isinstance(text, str):
+        return None
+    
+    # Remove potential XSS
+    text = text.replace('<', '&lt;').replace('>', '&gt;')
+    text = text.replace('javascript:', '').replace('data:', '')
+    
+    # Limit length
+    if len(text) > max_length:
+        text = text[:max_length]
+    
+    return text.strip()
+
+def validate_user_id(user_id):
+    """Validate user ID format"""
+    if not user_id or not isinstance(user_id, str):
+        return False
+    
+    # Allow alphanumeric, underscore, hyphen
+    import string
+    allowed_chars = string.ascii_letters + string.digits + '_-'
+    if not all(c in allowed_chars for c in user_id):
+        return False
+    
+    return len(user_id) <= 100
+
+def verify_line_signature(request):
+    """Verify LINE webhook signature"""
+    channel_secret = os.getenv('LINE_SECRET', '')
+    if not channel_secret:
+        return False
+    
+    body = request.get_data(as_text=True)
+    signature = request.headers.get('X-Line-Signature')
+    
+    if not signature:
+        return False
+    
+    hash_value = hmac.new(
+        channel_secret.encode('utf-8'),
+        body.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+    
+    expected_signature = 'sha256=' + hashlib.b64encode(hash_value).decode()
+    
+    return hmac.compare_digest(signature, expected_signature)
 
 def clean_response(text):
     """Remove thinking tags and clean up the response"""
@@ -122,24 +198,42 @@ def search_related_conversations(user_id, current_message, limit=8):
         if not keywords:
             return []
         
+        # Validate user_id to prevent injection
+        if not user_id or not isinstance(user_id, str) or len(user_id) > 100:
+            return []
+        
         # Collect all matches with relevance scoring
         conversation_scores = {}
         
         for i, keyword in enumerate(keywords[:6]):  # Top 6 keywords
             try:
-                # Single query searching both fields
+                # Sanitize keyword to prevent injection
+                keyword = str(keyword).replace('%', '').replace('_', '').replace("'", '').replace('"', '')[:50]
+                if not keyword:
+                    continue
+                
+                # Safe parameterized query
                 matches = supabase.table('conversations')\
                     .select('message, response, created_at')\
-                    .eq('user_id', user_id or 'anonymous')\
-                    .or_(f'message.ilike.%{keyword}%,response.ilike.%{keyword}%')\
+                    .eq('user_id', user_id)\
+                    .ilike('message', f'%{keyword}%')\
                     .order('created_at', desc=True)\
-                    .limit(20)\
+                    .limit(10)\
+                    .execute()
+                    
+                response_matches = supabase.table('conversations')\
+                    .select('message, response, created_at')\
+                    .eq('user_id', user_id)\
+                    .ilike('response', f'%{keyword}%')\
+                    .order('created_at', desc=True)\
+                    .limit(10)\
                     .execute()
                 
                 # Score each conversation
                 keyword_weight = 1.0 / (i + 1)  # Higher weight for earlier keywords
                 
-                for conv in matches.data:
+                all_matches = matches.data + response_matches.data
+                for conv in all_matches:
                     conv_id = conv['created_at']
                     if conv_id not in conversation_scores:
                         conversation_scores[conv_id] = {
@@ -148,9 +242,9 @@ def search_related_conversations(user_id, current_message, limit=8):
                             'matched_keywords': set()
                         }
                     
-                    # Count keyword occurrences in both message and response
-                    msg_count = conv['message'].lower().count(keyword.lower())
-                    resp_count = conv['response'].lower().count(keyword.lower())
+                    # Count keyword occurrences safely
+                    msg_count = str(conv.get('message', '')).lower().count(keyword.lower())
+                    resp_count = str(conv.get('response', '')).lower().count(keyword.lower())
                     
                     # Add weighted score
                     conversation_scores[conv_id]['score'] += (msg_count + resp_count) * keyword_weight
@@ -706,8 +800,17 @@ def chat():
 def api_chat():
     try:
         data = request.get_json()
-        message = data.get('message', '')
-        user_id = data.get('user_id', 'anonymous')  # Allow user identification
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+        
+        message = validate_input(data.get('message', ''), max_length=2000)
+        user_id = data.get('user_id', 'anonymous')
+        
+        if not message:
+            return jsonify({'error': 'Message is required and must be valid text'}), 400
+        
+        if not validate_user_id(user_id):
+            return jsonify({'error': 'Invalid user ID format'}), 400
         
         # Generate context-aware message using conversation history and knowledge base
         enhanced_message = generate_context_aware_response(message, user_id)
@@ -861,6 +964,11 @@ def dify_direct_test():
 def line_webhook():
     """LINE webhook handler - collect and save LINE messages"""
     try:
+        # Verify LINE signature for security
+        if not verify_line_signature(request):
+            logger.warning("Invalid LINE webhook signature")
+            return 'Unauthorized', 401
+        
         body = request.get_json()
         
         if not body or 'events' not in body:
@@ -868,8 +976,12 @@ def line_webhook():
         
         for event in body['events']:
             if event.get('type') == 'message' and event.get('message', {}).get('type') == 'text':
-                message_text = event.get('message', {}).get('text', '')
+                message_text = validate_input(event.get('message', {}).get('text', ''), max_length=2000)
                 user_id = event.get('source', {}).get('userId', 'unknown')
+                
+                # Skip if message is invalid
+                if not message_text or not validate_user_id(user_id):
+                    continue
                 
                 # Save all LINE messages to external_chat_logs for data collection
                 if supabase:
@@ -1084,11 +1196,17 @@ def create_reminder():
     """Create a new reminder"""
     try:
         data = request.get_json()
-        message = data.get('message', '')
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+            
+        message = validate_input(data.get('message', ''), max_length=500)
         user_id = data.get('user_id', 'anonymous')
         
         if not message:
-            return jsonify({'error': 'Message is required'}), 400
+            return jsonify({'error': 'Message is required and must be valid text'}), 400
+            
+        if not validate_user_id(user_id):
+            return jsonify({'error': 'Invalid user ID format'}), 400
         
         # Process reminder request
         response = process_reminder_request(f"リマインダー {message}", user_id)
@@ -1107,14 +1225,18 @@ def get_user_reminders():
     try:
         user_id = request.args.get('user_id', 'anonymous')
         
+        if not validate_user_id(user_id):
+            return jsonify({'error': 'Invalid user ID format'}), 400
+        
         if not supabase:
             return jsonify({'error': 'Database not configured'}), 500
         
         response = supabase.table('reminders')\
-            .select('*')\
+            .select('id, content, reminder_type, scheduled_time, hour, minute, created_at')\
             .eq('user_id', user_id)\
             .eq('is_active', True)\
             .order('created_at', desc=True)\
+            .limit(100)\
             .execute()
         
         return jsonify({'reminders': response.data})
