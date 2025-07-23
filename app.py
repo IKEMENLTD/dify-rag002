@@ -6,6 +6,7 @@ import hmac
 import hashlib
 import secrets
 import logging
+import base64
 import os
 import requests
 import json
@@ -108,13 +109,14 @@ def verify_line_signature(request):
     if not signature:
         return False
     
+    # LINE uses base64 encoded HMAC-SHA256
     hash_value = hmac.new(
         channel_secret.encode('utf-8'),
         body.encode('utf-8'),
         hashlib.sha256
     ).digest()
     
-    expected_signature = 'sha256=' + hashlib.b64encode(hash_value).decode()
+    expected_signature = base64.b64encode(hash_value).decode()
     
     return hmac.compare_digest(signature, expected_signature)
 
@@ -1248,13 +1250,30 @@ def get_user_reminders():
 def delete_reminder(reminder_id):
     """Delete/deactivate a reminder"""
     try:
+        # Get user_id from request header or session (placeholder for auth)
+        user_id = request.args.get('user_id', 'anonymous')
+        
+        if not validate_user_id(user_id):
+            return jsonify({'error': 'Invalid user ID'}), 400
+            
         if not supabase:
             return jsonify({'error': 'Database not configured'}), 500
+        
+        # First verify the reminder belongs to this user
+        reminder = supabase.table('reminders')\
+            .select('user_id')\
+            .eq('id', reminder_id)\
+            .single()\
+            .execute()
+            
+        if not reminder.data or reminder.data.get('user_id') != user_id:
+            return jsonify({'error': 'Reminder not found or unauthorized'}), 404
         
         # Deactivate reminder in database
         supabase.table('reminders')\
             .update({'is_active': False})\
             .eq('id', reminder_id)\
+            .eq('user_id', user_id)\
             .execute()
         
         # Remove from scheduler
