@@ -934,6 +934,7 @@ def revoke_share_link(share_token):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/manual')
+@app.route('/user_manual.html')
 def user_manual():
     """ユーザーマニュアルページ"""
     try:
