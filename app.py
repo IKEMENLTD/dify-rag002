@@ -8,7 +8,9 @@ import secrets
 import logging
 import base64
 from auth_system import AuthManager, require_auth, require_line_auth
+from share_system import create_conversation_share_link, verify_share_token, get_related_conversations, SHARED_CONVERSATION_TEMPLATE
 from datetime import datetime
+from flask import render_template_string
 import os
 import requests
 import json
@@ -799,6 +801,146 @@ def logout():
     except Exception as e:
         logger.error(f"Logout error: {str(e)}")
         return jsonify({'message': 'Logged out'})
+
+# === 会話共有システム ===
+
+@app.route('/api/conversations/<conversation_id>/share', methods=['POST'])
+@require_auth(['write'])
+def create_share_link(conversation_id):
+    """会話共有リンク生成"""
+    try:
+        data = request.get_json() or {}
+        expires_hours = data.get('expires_hours', 24)  # デフォルト24時間
+        password = data.get('password')  # オプション
+        permissions = data.get('permissions', ['read'])  # read, comment
+        
+        result = create_conversation_share_link(
+            supabase, conversation_id, g.current_user_id, 
+            expires_hours, password, permissions
+        )
+        
+        if 'error' in result:
+            return jsonify(result), 404
+        
+        share_url = f"{request.host_url}share/{result['share_token']}"
+        
+        return jsonify({
+            'success': True,
+            'share_url': share_url,
+            'expires_at': result['expires_at'],
+            'permissions': permissions
+        })
+        
+    except Exception as e:
+        logger.error(f"Share link creation error: {str(e)}")
+        return jsonify({'error': f'共有リンク生成エラー: {str(e)}'}), 500
+
+@app.route('/share/<share_token>', methods=['GET'])
+def view_shared_conversation(share_token):
+    """共有会話表示（HTML）"""
+    try:
+        password = request.args.get('password')
+        result = verify_share_token(supabase, share_token, password)
+        
+        if 'error' in result:
+            if result.get('require_password'):
+                return render_template_string(SHARED_CONVERSATION_TEMPLATE, 
+                                            require_password=True)
+            return f"エラー: {result['error']}", 404 if 'invalid' in result['error'].lower() else 410
+        
+        conversation = result['conversation']
+        related_conversations = get_related_conversations(
+            supabase, conversation['user_uuid'], conversation['id']
+        )
+        
+        return render_template_string(SHARED_CONVERSATION_TEMPLATE,
+            conversation=conversation,
+            related_conversations=related_conversations,
+            expires_at=result['expires_at'],
+            require_password=False
+        )
+        
+    except Exception as e:
+        logger.error(f"Shared conversation view error: {str(e)}")
+        return f"エラー: {str(e)}", 500
+
+@app.route('/api/share/<share_token>', methods=['GET'])
+def get_shared_conversation_api(share_token):
+    """共有会話取得（JSON API）"""
+    try:
+        password = request.args.get('password')
+        result = verify_share_token(supabase, share_token, password)
+        
+        if 'error' in result:
+            status_code = 404 if 'invalid' in result['error'].lower() else 410
+            return jsonify(result), status_code
+        
+        # 関連会話も含めて返却
+        related_conversations = get_related_conversations(
+            supabase, result['conversation']['user_uuid'], result['conversation']['id']
+        )
+        
+        return jsonify({
+            'success': True,
+            'conversation': result['conversation'],
+            'related_conversations': related_conversations,
+            'permissions': result['permissions'],
+            'expires_at': result['expires_at']
+        })
+        
+    except Exception as e:
+        logger.error(f"Shared conversation API error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/conversations/<conversation_id>/shares', methods=['GET'])
+@require_auth(['read'])
+def list_conversation_shares(conversation_id):
+    """会話の共有リンク一覧"""
+    try:
+        shares = supabase.table('shared_conversations')\
+            .select('id, share_token, expires_at, permissions, is_active, access_count, created_at')\
+            .eq('conversation_id', conversation_id)\
+            .eq('created_by', g.current_user_id)\
+            .order('created_at', desc=True)\
+            .execute()
+        
+        return jsonify({
+            'success': True,
+            'shares': shares.data
+        })
+        
+    except Exception as e:
+        logger.error(f"List shares error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/shares/<share_token>/revoke', methods=['DELETE'])
+@require_auth(['write'])
+def revoke_share_link(share_token):
+    """共有リンク無効化"""
+    try:
+        result = supabase.table('shared_conversations')\
+            .update({'is_active': False})\
+            .eq('share_token', share_token)\
+            .eq('created_by', g.current_user_id)\
+            .execute()
+        
+        return jsonify({
+            'success': True,
+            'message': '共有リンクを無効化しました'
+        })
+        
+    except Exception as e:
+        logger.error(f"Revoke share error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/manual')
+def user_manual():
+    """ユーザーマニュアルページ"""
+    try:
+        with open('user_manual.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "マニュアルファイルが見つかりません", 404
 
 @app.route('/ping')
 def ping():

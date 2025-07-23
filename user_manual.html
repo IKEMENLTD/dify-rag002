@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 ベテランAI 取扱説明書 - 完全ガイド</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Noto Sans JP', Arial, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateX(0) translateY(0); }
+            100% { transform: translateX(-50px) translateY(-50px); }
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-feature {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .nav-section {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .nav-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .nav-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-color: #3498db;
+            color: #3498db;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-right: 10px;
+        }
+
+        .content-section {
+            padding: 50px 40px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+            scroll-margin-top: 100px;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            border-radius: 2px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #3498db;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            margin-bottom: 25px;
+            padding-left: 60px;
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .demo-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 40px 0;
+            position: relative;
+        }
+
+        .demo-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .chat-demo {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            position: relative;
+        }
+
+        .chat-message.user {
+            background: #3498db;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.ai {
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .alert-box.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-box.info {
+            background: #d6f5ff;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card.featured {
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured::before {
+            content: '推奨';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #3498db;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .pricing-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .pricing-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .pricing-features li {
+            padding: 8px 0;
+            color: #666;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            color: #27ae60;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn.btn-outline {
+            background: transparent;
+            color: #3498db;
+            border: 2px solid #3498db;
+        }
+
+        .btn.btn-outline:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .faq-section {
+            margin-top: 60px;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 25px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-weight: 600;
+            color: #2c3e50;
+            border: none;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: #e9ecef;
+        }
+
+        .faq-answer {
+            padding: 0 25px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-answer.active {
+            padding: 20px 25px;
+            max-height: 500px;
+        }
+
+        .footer-section {
+            background: #2c3e50;
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+        }
+
+        .footer-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #3498db;
+        }
+
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .hero-features {
+                gap: 15px;
+            }
+            
+            .hero-feature {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .content-section {
+                padding: 30px 20px;
+            }
+            
+            .nav-section {
+                padding: 20px;
+            }
+            
+            .nav-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .feature-card {
+                padding: 20px;
+            }
+            
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .pricing-card.featured {
+                transform: none;
+            }
+            
+            .step-list li {
+                padding-left: 50px;
+            }
+            
+            .code-block {
+                padding: 15px;
+                font-size: 0.8rem;
+            }
+            
+            .demo-section {
+                padding: 25px 15px;
+            }
+            
+            .chat-demo {
+                padding: 15px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .hero-section {
+                padding: 40px 20px;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+            
+            .content-section {
+                padding: 20px 15px;
+            }
+            
+            .section-title {
+                font-size: 1.8rem;
+            }
+            
+            .feature-card {
+                padding: 15px;
+            }
+            
+            .feature-icon {
+                font-size: 2.5rem;
+            }
+            
+            .pricing-amount {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* スムーススクロール */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ヒーローセクション -->
+        <section class="hero-section">
+            <h1 class="hero-title">🤖 ベテランAI</h1>
+            <p class="hero-subtitle">企業レベル認証システム搭載 | 完全ガイド・取扱説明書</p>
+            <div class="hero-features">
+                <div class="hero-feature">🔒 完璧なセキュリティ</div>
+                <div class="hero-feature">💬 スマートチャット</div>
+                <div class="hero-feature">⏰ リマインダー機能</div>
+                <div class="hero-feature">🔗 会話共有</div>
+                <div class="hero-feature">📱 LINE連携</div>
+            </div>
+        </section>
+
+        <!-- ナビゲーション -->
+        <nav class="nav-section">
+            <div class="nav-grid">
+                <a href="#setup" class="nav-item">
+                    <span class="nav-icon">⚙️</span>セットアップ
+                </a>
+                <a href="#features" class="nav-item">
+                    <span class="nav-icon">✨</span>機能一覧
+                </a>
+                <a href="#auth" class="nav-item">
+                    <span class="nav-icon">🔐</span>認証システム
+                </a>
+                <a href="#chat" class="nav-item">
+                    <span class="nav-icon">💬</span>チャット機能
+                </a>
+                <a href="#reminder" class="nav-item">
+                    <span class="nav-icon">⏰</span>リマインダー
+                </a>
+                <a href="#share" class="nav-item">
+                    <span class="nav-icon">🔗</span>会話共有
+                </a>
+                <a href="#line" class="nav-item">
+                    <span class="nav-icon">📱</span>LINE連携
+                </a>
+                <a href="#api" class="nav-item">
+                    <span class="nav-icon">🔧</span>API仕様
+                </a>
+                <a href="#faq" class="nav-item">
+                    <span class="nav-icon">❓</span>よくある質問
+                </a>
+            </div>
+        </nav>
+
+        <div class="content-section">
+            <!-- セットアップセクション -->
+            <section id="setup" class="section">
+                <h2 class="section-title">⚙️ セットアップガイド</h2>
+                
+                <div class="alert-box info">
+                    <span class="alert-icon">💡</span>
+                    <strong>開始前の確認：</strong> ベテランAIを使用するには、Supabase、Dify AI、LINE Developersのアカウントが必要です。
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">🚀 導入手順</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>環境構築</strong><br>
+                        必要な依存関係をインストールし、環境変数を設定します。
+                        <div class="code-block" data-lang="bash">
+pip install -r requirements.txt
+cp .env.example .env
+# .envファイルに必要な設定を追加</div>
+                    </li>
+                    <li>
+                        <strong>データベース設定</strong><br>
+                        Supabaseで setup_database.sql を実行してテーブルを作成します。
+                        <div class="code-block" data-lang="sql">
+-- Supabase SQL Editorで実行
+-- users, api_keys, conversations, reminders テーブルを作成
+-- Row Level Security (RLS) ポリシーを設定</div>
+                    </li>
+                    <li>
+                        <strong>認証システム有効化</strong><br>
+                        JWT秘密鍵を生成し、Supabase認証を設定します。
+                        <div class="code-block" data-lang="env">
+JWT_SECRET_KEY=your-super-secret-jwt-key
+SECRET_KEY=your-flask-secret-key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-anon-key</div>
+                    </li>
+                    <li>
+                        <strong>外部サービス連携</strong><br>
+                        Dify AI、LINE Messaging APIの設定を行います。
+                        <div class="code-block" data-lang="env">
+DIFY_API_KEY=app-your-dify-key
+LINE_ACCESS_TOKEN=your-line-channel-access-token
+LINE_SECRET=your-line-channel-secret</div>
+                    </li>
+                    <li>
+                        <strong>アプリケーション起動</strong><br>
+                        設定が完了したら、アプリケーションを起動します。
+                        <div class="code-block" data-lang="bash">
+# 開発環境
+python app.py
+
+# 本番環境
+gunicorn app:app --bind 0.0.0.0:5000</div>
+                    </li>
+                </ol>
+
+                <div class="alert-box success">
+                    <span class="alert-icon">✅</span>
+                    <strong>セットアップ完了！</strong> https://your-domain.com にアクセスして、新規登録からベテランAIを使い始めましょう。
+                </div>
+            </section>
+
+            <!-- 機能一覧セクション -->
+            <section id="features" class="section">
+                <h2 class="section-title">✨ 主要機能一覧</h2>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <h3 class="feature-title">企業レベル認証</h3>
+                        <p class="feature-description">
+                            JWT + API Key の多層認証システムで、セキュリティを完璧に保護。Row Level Security (RLS) でデータを完全分離。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ メール/パスワード認証</li>
+                            <li>✓ LINE OAuth連携</li>
+                            <li>✓ API Key認証</li>
+                            <li>✓ 権限レベル制御</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3 class="feature-title">コンテキスト AI チャット</h3>
+                        <p class="feature-description">
+                            過去の会話履歴を分析し、文脈を理解したパーソナライズされた回答を生成。キーワード検索で関連情報を自動取得。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ 過去会話の自動参照</li>
+                            <li>✓ キーワード抽出検索</li>
+                            <li>✓ 重要度スコアリング</li>
+                            <li>✓ 多言語対応</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⏰</div>
+                        <h3 class="feature-title">スマートリマインダー</h3>
+                        <p class="feature-description">
+                            自然言語でリマインダーを設定。「明日の午前10時にミーティング」のような指示で自動的にスケジュール設定。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ 自然言語解析</li>
+                            <li>✓ 複数パターン対応</li>
+                            <li>✓ タイムゾーン自動調整</li>
+                            <li>✓ LINE通知連携</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔗</div>
+                        <h3 class="feature-title">セキュア会話共有</h3>
+                        <p class="feature-description">
+                            重要な会話を安全に共有。時間制限、パスワード保護、権限制御で完璧なセキュリティを実現。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ 時間制限付きリンク</li>
+                            <li>✓ パスワード保護</li>
+                            <li>✓ アクセス統計</li>
+                            <li>✓ 即座無効化</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h3 class="feature-title">LINE Bot 統合</h3>
+                        <p class="feature-description">
+                            LINEから直接ベテランAIと対話。Webhook署名検証で安全性を確保し、シームレスな体験を提供。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ リアルタイム返答</li>
+                            <li>✓ 署名検証セキュリティ</li>
+                            <li>✓ 会話履歴同期</li>
+                            <li>✓ リマインダー通知</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h3 class="feature-title">開発者 API</h3>
+                        <p class="feature-description">
+                            RESTful API でベテランAIを他のシステムと連携。API Key認証で安全なデータアクセスを実現。
+                        </p>
+                        <ul style="list-style: none; color: #666;">
+                            <li>✓ RESTful設計</li>
+                            <li>✓ JSON形式レスポンス</li>
+                            <li>✓ レート制限対応</li>
+                            <li>✓ 詳細エラーハンドリング</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 認証システムセクション -->
+            <section id="auth" class="section">
+                <h2 class="section-title">🔐 認証システム</h2>
+                
+                <div class="demo-section">
+                    <h3 class="demo-title">🚀 ログイン・新規登録</h3>
+                    <div class="chat-demo">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">フロントエンド認証フォーム</h4>
+                            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                                <div style="margin-bottom: 15px;">
+                                    <input type="email" placeholder="メールアドレス" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px;">
+                                    <input type="password" placeholder="パスワード" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+                                </div>
+                                <button class="btn" style="width: 100%; margin-bottom: 10px;">ログイン</button>
+                                <button class="btn btn-outline" style="width: 100%;">新規登録</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">🔑 認証方法</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌐</div>
+                        <h4 class="feature-title">Web認証</h4>
+                        <div class="code-block" data-lang="curl">
+# ログイン
+curl -X POST /api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# レスポンス
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {"email": "user@example.com", "role": "user"}
+}</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h4 class="feature-title">API Key認証</h4>
+                        <div class="code-block" data-lang="curl">
+# API Key生成
+curl -X POST /api/auth/api-keys \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"name":"My API Key","permissions":["read","write"]}'
+
+# API使用
+curl -X POST /api/chat \
+  -H "X-API-Key: vai_your_api_key_here" \
+  -d '{"message":"Hello"}'</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h4 class="feature-title">LINE認証</h4>
+                        <div class="code-block" data-lang="javascript">
+// LINE Webhook処理
+// 署名検証 → ユーザー認証 → 応答生成
+// すべて自動化されています
+
+// LINEからメッセージ送信
+"こんにちは、ベテランAI！"
+
+// 自動認証 → AI応答
+"こんにちは！何かお手伝いできることはありますか？"</div>
+                    </div>
+                </div>
+
+                <div class="alert-box">
+                    <span class="alert-icon">⚠️</span>
+                    <strong>セキュリティポイント：</strong> 
+                    すべての認証はRow Level Security (RLS) で保護され、ユーザーは自分のデータのみアクセス可能です。
+                </div>
+            </section>
+
+            <!-- チャット機能セクション -->
+            <section id="chat" class="section">
+                <h2 class="section-title">💬 AI チャット機能</h2>
+                
+                <div class="demo-section">
+                    <h3 class="demo-title">🤖 実際の会話例</h3>
+                    <div class="chat-demo">
+                        <div class="chat-message user">
+                            プロジェクトの進捗はどうですか？先週話した予算の件も含めて教えてください。
+                        </div>
+                        <div class="chat-message ai">
+                            過去の会話を確認しました。先週お話しした予算500万円の件ですね。<br><br>
+                            現在の進捗状況：<br>
+                            • フェーズ1: 完了 (予算内)<br>
+                            • フェーズ2: 80%完了<br>
+                            • 残り予算: 約150万円<br><br>
+                            順調に進んでおり、予定通り来月完了予定です。
+                        </div>
+                        <div class="chat-message user">
+                            ありがとう！来週のプレゼン用に資料をまとめてくれる？
+                        </div>
+                        <div class="chat-message ai">
+                            承知しました！プレゼン資料を作成いたします。<br><br>
+                            以下の項目でまとめますが、いかがでしょうか？<br>
+                            1. プロジェクト概要<br>
+                            2. 進捗状況と成果<br>
+                            3. 予算使用状況<br>
+                            4. 今後のスケジュール<br>
+                            5. 期待される効果
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">🧠 AI機能の特徴</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h4 class="feature-title">コンテキスト理解</h4>
+                        <p class="feature-description">
+                            過去の会話履歴を自動的に検索し、関連する情報を含めて回答します。
+                        </p>
+                        <div class="code-block" data-lang="python">
+# キーワード抽出アルゴリズム
+def extract_keywords(text):
+    # 重要度による重み付け
+    # 長さと頻度でスコアリング
+    # 上位8キーワードを抽出
+    return keywords[:8]</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4 class="feature-title">関連度スコアリング</h4>
+                        <p class="feature-description">
+                            類似する過去の会話を重要度順でランキングし、最適な情報を提供します。
+                        </p>
+                        <div class="code-block" data-lang="python">
+# 関連度計算
+relevance_score = (
+    keyword_matches * 0.4 +
+    temporal_relevance * 0.3 +
+    context_similarity * 0.3
+)</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <h4 class="feature-title">多言語対応</h4>
+                        <p class="feature-description">
+                            日本語・英語のキーワード抽出と自然言語処理に完全対応しています。
+                        </p>
+                        <div class="code-block" data-lang="text">
+入力例：
+"Please tell me about the project progress"
+"プロジェクトの進捗を教えて"
+
+どちらでも適切に処理されます。</div>
+                    </div>
+                </div>
+
+                <div class="alert-box info">
+                    <span class="alert-icon">💡</span>
+                    <strong>使用のコツ：</strong> 
+                    具体的な日付や固有名詞を含めて質問すると、より正確で詳細な回答が得られます。
+                </div>
+            </section>
+
+            <!-- リマインダーセクション -->
+            <section id="reminder" class="section">
+                <h2 class="section-title">⏰ リマインダー機能</h2>
+                
+                <div class="demo-section">
+                    <h3 class="demo-title">🗓️ 自然言語でのリマインダー設定</h3>
+                    <div class="chat-demo">
+                        <div class="chat-message user">
+                            リマインダー：明日の午前10時にチームミーティング
+                        </div>
+                        <div class="chat-message ai">
+                            ✅ リマインダーを設定しました！<br><br>
+                            📅 日時: 2024年1月15日 10:00 AM<br>
+                            📝 内容: チームミーティング<br>
+                            📱 通知: LINEでお知らせします<br><br>
+                            時間になりましたらLINEに通知いたします。
+                        </div>
+                        <div class="chat-message user">
+                            毎週月曜日の9時に週報リマインドもお願いします
+                        </div>
+                        <div class="chat-message ai">
+                            ✅ 定期リマインダーを設定しました！<br><br>
+                            🔄 繰り返し: 毎週月曜日<br>
+                            ⏰ 時刻: 9:00 AM<br>
+                            📝 内容: 週報リマインド<br><br>
+                            毎週月曜日の9時にLINEでお知らせします。
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">📋 対応する表現パターン</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <h4 class="feature-title">日付指定</h4>
+                        <ul style="list-style: none; color: #666; line-height: 1.8;">
+                            <li>✓ "明日の10時"</li>
+                            <li>✓ "来週の金曜日"</li>
+                            <li>✓ "1月15日の午後3時"</li>
+                            <li>✓ "2024年12月25日"</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h4 class="feature-title">繰り返し設定</h4>
+                        <ul style="list-style: none; color: #666; line-height: 1.8;">
+                            <li>✓ "毎日9時に"</li>
+                            <li>✓ "毎週月曜日"</li>
+                            <li>✓ "毎月1日"</li>
+                            <li>✓ "平日の朝8時"</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⏰</div>
+                        <h4 class="feature-title">時刻表現</h4>
+                        <ul style="list-style: none; color: #666; line-height: 1.8;">
+                            <li>✓ "午前10時" / "10:00"</li>
+                            <li>✓ "夕方6時" / "18:00"</li>
+                            <li>✓ "お昼の12時"</li>
+                            <li>✓ "夜9時半"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="alert-box success">
+                    <span class="alert-icon">🌏</span>
+                    <strong>タイムゾーン対応：</strong> 
+                    日本標準時 (JST) で自動調整されます。海外からのアクセスでも正確な時間で通知します。
+                </div>
+            </section>
+
+            <!-- 会話共有セクション -->
+            <section id="share" class="section">
+                <h2 class="section-title">🔗 会話共有システム</h2>
+                
+                <div class="demo-section">
+                    <h3 class="demo-title">🚀 共有リンクの生成と使用</h3>
+                    <div class="chat-demo">
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">📋 共有設定</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">有効期限</label>
+                                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                                        <option>24時間</option>
+                                        <option>48時間</option>
+                                        <option>1週間</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">権限</label>
+                                    <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                                        <option>読み取りのみ</option>
+                                        <option>コメント可能</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: 600;">パスワード (オプション)</label>
+                                <input type="password" placeholder="保護パスワード" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                            </div>
+                            <button class="btn" style="width: 100%;">🔗 共有リンク生成</button>
+                        </div>
+                        
+                        <div style="background: #d4edda; padding: 15px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                            <strong>✅ 共有リンクが生成されました！</strong><br>
+                            <code style="background: white; padding: 5px 10px; border-radius: 4px; margin-top: 10px; display: inline-block;">
+                                https://your-domain.com/share/vai_abc123xyz...
+                            </code>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">🔒 セキュリティ機能</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⏰</div>
+                        <h4 class="feature-title">時間制限</h4>
+                        <p class="feature-description">
+                            指定した時間で自動的にリンクが無効化されます。
+                        </p>
+                        <div class="code-block" data-lang="json">
+{
+  "expires_hours": 24,
+  "auto_cleanup": true,
+  "timezone": "Asia/Tokyo"
+}</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <h4 class="feature-title">パスワード保護</h4>
+                        <p class="feature-description">
+                            重要な情報にはパスワードを設定して追加保護を実現。
+                        </p>
+                        <div class="code-block" data-lang="json">
+{
+  "password": "secure123",
+  "hash_algorithm": "SHA256",
+  "access_attempts": 3
+}</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4 class="feature-title">アクセス統計</h4>
+                        <p class="feature-description">
+                            誰がいつアクセスしたかを追跡し、セキュリティを確保。
+                        </p>
+                        <div class="code-block" data-lang="json">
+{
+  "access_count": 5,
+  "last_accessed": "2024-01-14T15:30:00Z",
+  "unique_visitors": 3
+}</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">📱 API使用例</h3>
+                <div class="code-block" data-lang="curl">
+# 共有リンク生成
+curl -X POST /api/conversations/abc-123/share \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "expires_hours": 48,
+    "password": "team_secret",
+    "permissions": ["read"]
+  }'
+
+# 共有会話アクセス
+curl -X GET "https://your-domain.com/api/share/vai_token123?password=team_secret"
+
+# 共有リンク一覧
+curl -X GET /api/conversations/abc-123/shares \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# 共有リンク無効化
+curl -X DELETE /api/shares/vai_token123/revoke \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</div>
+            </section>
+
+            <!-- LINE連携セクション -->
+            <section id="line" class="section">
+                <h2 class="section-title">📱 LINE Bot 連携</h2>
+                
+                <div class="demo-section">
+                    <h3 class="demo-title">💬 LINE での実際のやり取り</h3>
+                    <div class="chat-demo" style="background: #00B900; color: white;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h4 style="color: white; margin-bottom: 10px;">LINE Chat</h4>
+                            <div style="font-size: 0.9em; opacity: 0.8;">ベテランAI Bot</div>
+                        </div>
+                        
+                        <div class="chat-message" style="background: white; color: #333; margin-left: auto;">
+                            今日の売上はどうでしたか？
+                        </div>
+                        <div class="chat-message" style="background: rgba(255,255,255,0.1); color: white; margin-right: auto;">
+                            過去のデータを確認しました📊<br><br>
+                            本日の売上: 150万円<br>
+                            前日比: +15% ⬆️<br>
+                            月間目標達成率: 78%<br><br>
+                            順調に推移していますね！
+                        </div>
+                        <div class="chat-message" style="background: white; color: #333; margin-left: auto;">
+                            明日の会議のリマインドお願いします
+                        </div>
+                        <div class="chat-message" style="background: rgba(255,255,255,0.1); color: white; margin-right: auto;">
+                            ✅ リマインダーを設定しました！<br><br>
+                            📅 明日 10:00 AM<br>
+                            📝 会議のお知らせ<br><br>
+                            時間になりましたらLINEでお知らせします🔔
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">⚙️ LINE Bot 設定手順</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>LINE Developers アカウント作成</strong><br>
+                        LINE Developersコンソールでアカウントを作成し、新しいチャンネルを作成します。
+                    </li>
+                    <li>
+                        <strong>チャンネル設定</strong><br>
+                        Messaging API チャンネルを作成し、Channel Access Token と Channel Secret を取得します。
+                    </li>
+                    <li>
+                        <strong>Webhook URL 設定</strong><br>
+                        ベテランAIのWebhook URLを LINE Developersコンソールに登録します。
+                        <div class="code-block" data-lang="text">
+Webhook URL: https://your-domain.com/webhook/line</div>
+                    </li>
+                    <li>
+                        <strong>環境変数設定</strong><br>
+                        取得したトークンとシークレットを環境変数に設定します。
+                        <div class="code-block" data-lang="env">
+LINE_ACCESS_TOKEN=your_channel_access_token
+LINE_SECRET=your_channel_secret</div>
+                    </li>
+                    <li>
+                        <strong>Bot 友達追加</strong><br>
+                        QRコードまたはLINE IDでベテランAIを友達追加し、チャットを開始します。
+                    </li>
+                </ol>
+
+                <div class="alert-box info">
+                    <span class="alert-icon">🔒</span>
+                    <strong>セキュリティ：</strong> 
+                    すべてのLINE Webhookは署名検証により保護されており、不正なアクセスを完全にブロックします。
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">📋 対応機能</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h4 class="feature-title">リアルタイムチャット</h4>
+                        <p class="feature-description">
+                            LINEメッセージに対してリアルタイムでAI応答を返します。
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⏰</div>
+                        <h4 class="feature-title">リマインダー通知</h4>
+                        <p class="feature-description">
+                            設定されたリマインダーをLINEに自動通知します。
+                        </p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4 class="feature-title">会話履歴同期</h4>
+                        <p class="feature-description">
+                            WebとLINEの会話履歴が自動的に同期されます。
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API仕様セクション -->
+            <section id="api" class="section">
+                <h2 class="section-title">🔧 API 仕様書</h2>
+                
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">🔐 認証</h3>
+                <div class="code-block" data-lang="bash">
+# JWT認証
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" https://api.example.com/endpoint
+
+# API Key認証
+curl -H "X-API-Key: vai_your_api_key" https://api.example.com/endpoint</div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">📡 主要エンドポイント</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h4 class="feature-title">チャット API</h4>
+                        <div class="code-block" data-lang="bash">
+POST /api/chat
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "message": "プロジェクトの進捗は？",
+  "include_history": true
+}</div>
+                        <div class="code-block" data-lang="json">
+{
+  "success": true,
+  "response": "現在の進捗は80%です...",
+  "related_conversations": [...],
+  "conversation_id": "abc-123"
+}</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">⏰</div>
+                        <h4 class="feature-title">リマインダー API</h4>
+                        <div class="code-block" data-lang="bash">
+POST /api/reminder
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "message": "明日の10時にミーティング"
+}</div>
+                        <div class="code-block" data-lang="json">
+{
+  "success": true,
+  "reminder": {
+    "datetime": "2024-01-15T10:00:00+09:00",
+    "content": "ミーティング",
+    "type": "once"
+  }
+}</div>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔗</div>
+                        <h4 class="feature-title">共有 API</h4>
+                        <div class="code-block" data-lang="bash">
+POST /api/conversations/{id}/share
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN
+
+{
+  "expires_hours": 24,
+  "password": "optional",
+  "permissions": ["read"]
+}</div>
+                        <div class="code-block" data-lang="json">
+{
+  "success": true,
+  "share_url": "https://domain.com/share/token",
+  "expires_at": "2024-01-15T10:00:00Z"
+}</div>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">📋 レスポンス形式</h3>
+                <div class="code-block" data-lang="json">
+// 成功レスポンス
+{
+  "success": true,
+  "data": { ... },
+  "timestamp": "2024-01-14T10:30:00Z"
+}
+
+// エラーレスポンス
+{
+  "success": false,
+  "error": "Authentication required",
+  "error_code": "AUTH_001",
+  "timestamp": "2024-01-14T10:30:00Z"
+}</div>
+
+                <h3 style="font-size: 1.8rem; margin-top: 40px; margin-bottom: 20px; color: #2c3e50;">⚡ レート制限</h3>
+                <div class="alert-box">
+                    <span class="alert-icon">🚨</span>
+                    <strong>レート制限：</strong> 
+                    APIは10分間に100リクエストまで。制限を超えた場合は429エラーが返されます。
+                </div>
+            </section>
+
+            <!-- よくある質問セクション -->
+            <section id="faq" class="section">
+                <h2 class="section-title">❓ よくある質問</h2>
+                
+                <div class="faq-section">
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            🔐 セキュリティは本当に安全ですか？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            はい、企業レベルのセキュリティを実装しています：<br>
+                            • JWT + API Key の多層認証<br>
+                            • Row Level Security (RLS) によるデータ完全分離<br>
+                            • LINE Webhook署名検証<br>
+                            • 全エンドポイントの認証必須<br>
+                            • SQL インジェクション完全対策<br>
+                            銀行レベルのセキュリティ基準を満たしています。
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            💰 料金体系はどうなっていますか？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            ベテランAI自体は無料で使用できます。ただし、以下の外部サービス料金が発生します：<br>
+                            • Supabase: 無料枠あり（月500MB、50,000行まで）<br>
+                            • Dify AI: 使用量に応じた従量課金<br>
+                            • LINE Messaging API: 月1,000通まで無料<br>
+                            • Render.com: 無料プランあり<br>
+                            小規模利用なら月額0円から始められます。
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            🚀 導入にどのくらい時間がかかりますか？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            技術者であれば約2-3時間で完了します：<br>
+                            • 環境構築: 30分<br>
+                            • データベース設定: 30分<br>
+                            • 外部サービス連携: 1時間<br>
+                            • テスト・デプロイ: 1時間<br>
+                            非技術者の場合は、技術サポートをご利用ください。
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            📱 LINEから使えない場合は？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            以下をご確認ください：<br>
+                            • LINE_ACCESS_TOKEN が正しく設定されているか<br>
+                            • LINE_SECRET が正しく設定されているか<br>
+                            • Webhook URL が正しく登録されているか<br>
+                            • Bot が友達追加されているか<br>
+                            • メッセージ送信設定が有効になっているか<br>
+                            それでも解決しない場合は、ログを確認してください。
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            🔧 カスタマイズは可能ですか？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            はい、完全にカスタマイズ可能です：<br>
+                            • AI応答のトーン・スタイル調整<br>
+                            • 新機能の追加開発<br>
+                            • UI/UXのカスタマイズ<br>
+                            • 他システムとの連携<br>
+                            • 独自認証システムの統合<br>
+                            オープンソースなので自由に改修できます。
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question" onclick="toggleFaq(this)">
+                            📊 データのバックアップは？
+                            <span>▼</span>
+                        </button>
+                        <div class="faq-answer">
+                            Supabaseが自動的にバックアップを行います：<br>
+                            • 毎日の自動バックアップ<br>
+                            • Point-in-time リカバリ対応<br>
+                            • 複数リージョンでの冗長化<br>
+                            • 手動エクスポート機能<br>
+                            データ損失の心配はありません。
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- フッターセクション -->
+        <footer class="footer-section">
+            <h3 class="footer-title">🤖 ベテランAI</h3>
+            <p style="margin-bottom: 30px; opacity: 0.8;">企業レベル認証システム搭載の次世代AIアシスタント</p>
+            
+            <div class="footer-links">
+                <a href="#setup" class="footer-link">セットアップ</a>
+                <a href="#features" class="footer-link">機能一覧</a>
+                <a href="#auth" class="footer-link">認証システム</a>
+                <a href="#api" class="footer-link">API仕様</a>
+                <a href="#faq" class="footer-link">FAQ</a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #34495e;">
+                <p style="opacity: 0.6; margin-bottom: 10px;">
+                    🚀 Powered by Claude Code | 🔒 Enterprise-grade Security
+                </p>
+                <p style="opacity: 0.6; font-size: 0.9rem;">
+                    © 2024 ベテランAI - All Rights Reserved
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // FAQ トグル機能
+        function toggleFaq(button) {
+            const answer = button.nextElementSibling;
+            const icon = button.querySelector('span');
+            
+            if (answer.classList.contains('active')) {
+                answer.classList.remove('active');
+                icon.textContent = '▼';
+            } else {
+                // 他のFAQを閉じる
+                document.querySelectorAll('.faq-answer.active').forEach(item => {
+                    item.classList.remove('active');
+                    item.previousElementSibling.querySelector('span').textContent = '▼';
+                });
+                
+                answer.classList.add('active');
+                icon.textContent = '▲';
+            }
+        }
+
+        // スムーススクロール（古いブラウザ対応）
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // ナビゲーションハイライト
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.section');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 120;
+                if (window.pageYOffset >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.style.borderColor = 'transparent';
+                item.style.color = '#2c3e50';
+                if (item.getAttribute('href') === '#' + current) {
+                    item.style.borderColor = '#3498db';
+                    item.style.color = '#3498db';
+                }
+            });
+        });
+
+        // パフォーマンス最適化: Intersection Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // アニメーション対象要素の初期化
+        document.querySelectorAll('.feature-card, .section').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // 初期表示時のアニメーション
+        window.addEventListener('load', () => {
+            document.querySelectorAll('.hero-section > *').forEach((el, index) => {
+                el.style.animation = `fadeInUp 0.6s ease ${index * 0.1}s both`;
+            });
+        });
+
+        // fadeInUp アニメーション定義
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

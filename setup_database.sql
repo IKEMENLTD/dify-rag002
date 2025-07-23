@@ -163,9 +163,39 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- VALUES ('admin@example.com', 'システム管理者', 'admin', 'email')
 -- ON CONFLICT (email) DO NOTHING;
 
--- 11. データベース統計更新
+-- 11. 共有会話テーブル追加
+CREATE TABLE IF NOT EXISTS shared_conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+    share_token TEXT UNIQUE NOT NULL,
+    created_by UUID REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    permissions TEXT[] DEFAULT ARRAY['read'],
+    password_hash TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    access_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 共有会話インデックス
+CREATE INDEX IF NOT EXISTS idx_shared_conversations_token ON shared_conversations(share_token);
+CREATE INDEX IF NOT EXISTS idx_shared_conversations_expires ON shared_conversations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_shared_conversations_created_by ON shared_conversations(created_by);
+
+-- 共有会話RLS
+ALTER TABLE shared_conversations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own shared conversations" ON shared_conversations
+    FOR ALL USING (
+        created_by IN (
+            SELECT id FROM users WHERE auth_user_id = auth.uid()
+        )
+    );
+
+-- 12. データベース統計更新
 ANALYZE users;
 ANALYZE api_keys;
 ANALYZE conversations;
 ANALYZE reminders;
 ANALYZE knowledge_base;
+ANALYZE shared_conversations;
