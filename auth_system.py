@@ -245,10 +245,37 @@ def require_auth(permissions=None):
 
 def require_line_auth(f):
     """LINE専用認証デコレーター"""
-    @wraps(f)
+    @wraps(f)  
     def decorated_function(*args, **kwargs):
-        # LINE署名検証は既存のverify_line_signature使用
-        if not verify_line_signature(request):
+        from flask import request, jsonify
+        
+        # LINE署名検証
+        def verify_line_signature_internal(request):
+            """LINE webhook signature verification"""
+            import os, hmac, hashlib, base64
+            
+            channel_secret = os.getenv('LINE_SECRET', '')
+            if not channel_secret:
+                return False
+            
+            body = request.get_data(as_text=True)
+            signature = request.headers.get('X-Line-Signature')
+            
+            if not signature:
+                return False
+            
+            # LINE uses base64 encoded HMAC-SHA256
+            hash_value = hmac.new(
+                channel_secret.encode('utf-8'),
+                body.encode('utf-8'),
+                hashlib.sha256
+            ).digest()
+            
+            expected_signature = base64.b64encode(hash_value).decode()
+            
+            return hmac.compare_digest(signature, expected_signature)
+        
+        if not verify_line_signature_internal(request):
             return jsonify({'error': 'Invalid LINE signature'}), 401
         
         return f(*args, **kwargs)

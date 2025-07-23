@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, g
 from flask_cors import CORS
 from functools import wraps
 import hmac
@@ -7,6 +7,8 @@ import hashlib
 import secrets
 import logging
 import base64
+from auth_system import AuthManager, require_auth, require_line_auth
+from datetime import datetime
 import os
 import requests
 import json
@@ -68,6 +70,12 @@ scheduler.start()
 # Cleanup on exit
 import atexit
 atexit.register(lambda: scheduler.shutdown())
+
+# Initialize Authentication Manager
+@app.before_request
+def load_auth_manager():
+    """Load authentication manager for each request"""
+    g.auth_manager = AuthManager(supabase)
 
 def validate_input(text, max_length=1000):
     """Validate and sanitize user input"""
@@ -614,29 +622,183 @@ def process_reminder_request(message_text, user_id):
 
 @app.route('/')
 def home():
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>ベテランAI</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
-            h1 { color: #1d4ed8; }
-            .status { background: #f0f9ff; padding: 20px; border-radius: 10px; margin: 20px 0; }
-        </style>
-    </head>
-    <body>
-        <h1>🤖 ベテランAI</h1>
-        <div class="status">
-            <p>✅ サーバーが正常に動作しています</p>
-        </div>
-        <p><a href="/ping">Ping Test</a></p>
-        <p><a href="/chat">チャット</a></p>
-        <p><a href="/api/status">API Status</a></p>
-        <p><a href="/test">テストページ</a></p>
-    </body>
-    </html>
-    """
+    """認証付きメインページ"""
+    try:
+        with open('frontend_auth.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>ベテランAI</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; text-align: center; }
+                h1 { color: #1d4ed8; }
+                .status { background: #f0f9ff; padding: 20px; border-radius: 10px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <h1>🤖 ベテランAI</h1>
+            <div class="status">
+                <p>✅ サーバーが正常に動作しています</p>
+                <p>⚠️ 認証システムを有効にするには frontend_auth.html が必要です</p>
+            </div>
+            <p><a href="/ping">Ping Test</a></p>
+            <p><a href="/chat">チャット</a></p>
+            <p><a href="/api/status">API Status</a></p>
+        </body>
+        </html>
+        """
+
+# === 認証エンドポイント ===
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    """ユーザーログイン"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+        
+        email = validate_input(data.get('email', ''), max_length=255)
+        password = data.get('password', '')
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+        
+        result = g.auth_manager.authenticate_user(email, password)
+        
+        if result['success']:
+            return jsonify({
+                'token': result['token'],
+                'user': result['user'],
+                'refresh_token': result.get('refresh_token')
+            })
+        else:
+            return jsonify({'error': result['error']}), 401
+            
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        return jsonify({'error': 'Login failed'}), 500
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    """新規ユーザー登録"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+        
+        email = validate_input(data.get('email', ''), max_length=255)
+        password = data.get('password', '')
+        display_name = validate_input(data.get('display_name', ''), max_length=100)
+        
+        if not email or not password:
+            return jsonify({'error': 'Email and password required'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
+        try:
+            # Supabase Auth登録
+            auth_response = supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+            
+            if auth_response.user:
+                # ユーザープロファイル作成
+                user_data = {
+                    'auth_user_id': auth_response.user.id,
+                    'email': email,
+                    'display_name': display_name or email.split('@')[0],
+                    'role': 'user',
+                    'auth_provider': 'email',
+                    'created_at': datetime.utcnow().isoformat()
+                }
+                
+                supabase.table('users').insert(user_data).execute()
+                
+                return jsonify({
+                    'message': 'Registration successful. Please check your email for verification.',
+                    'user_id': auth_response.user.id
+                })
+            else:
+                return jsonify({'error': 'Registration failed'}), 400
+                
+        except Exception as e:
+            logger.error(f"Registration error: {str(e)}")
+            return jsonify({'error': 'Registration failed. Email may already exist.'}), 400
+                
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        return jsonify({'error': 'Registration failed'}), 500
+
+@app.route('/api/auth/profile', methods=['GET'])
+@require_auth()
+def get_profile():
+    """ユーザープロファイル取得"""
+    try:
+        user_data = supabase.table('users')\
+            .select('id, email, display_name, role, created_at, line_id, auth_provider')\
+            .eq('id', g.current_user_id)\
+            .single()\
+            .execute()
+        
+        return jsonify({
+            'user': user_data.data,
+            'permissions': g.user_permissions
+        })
+    except Exception as e:
+        logger.error(f"Profile error: {str(e)}")
+        return jsonify({'error': 'Failed to get profile'}), 500
+
+@app.route('/api/auth/api-keys', methods=['POST'])
+@require_auth(['write'])
+def create_api_key():
+    """API Key生成"""
+    try:
+        data = request.get_json()
+        name = validate_input(data.get('name', 'Default API Key'), max_length=100)
+        permissions = data.get('permissions', ['read'])
+        
+        # 権限検証
+        valid_permissions = ['read', 'write', 'delete']
+        permissions = [p for p in permissions if p in valid_permissions]
+        
+        if not permissions:
+            permissions = ['read']
+        
+        api_key = g.auth_manager.create_api_key(g.current_user_id, name, permissions)
+        
+        return jsonify({
+            'api_key': api_key,
+            'name': name,
+            'permissions': permissions,
+            'note': 'このキーは再表示されません。安全に保管してください。'
+        })
+        
+    except Exception as e:
+        logger.error(f"API key creation error: {str(e)}")
+        return jsonify({'error': 'Failed to create API key'}), 500
+
+@app.route('/api/auth/logout', methods=['POST'])
+@require_auth()
+def logout():
+    """ログアウト"""
+    try:
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+            payload = g.auth_manager.verify_jwt_token(token)
+            if payload:
+                g.auth_manager.revoke_token(payload.get('jti'))
+        
+        return jsonify({'message': 'Logged out successfully'})
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+        return jsonify({'message': 'Logged out'})
 
 @app.route('/ping')
 def ping():
@@ -799,6 +961,7 @@ def chat():
     """
 
 @app.route('/api/chat', methods=['POST'])
+@require_auth(['write'])
 def api_chat():
     try:
         data = request.get_json()
@@ -806,13 +969,10 @@ def api_chat():
             return jsonify({'error': 'Invalid JSON'}), 400
         
         message = validate_input(data.get('message', ''), max_length=2000)
-        user_id = data.get('user_id', 'anonymous')
+        user_id = str(g.current_user_id)  # 認証済みユーザーIDを使用
         
         if not message:
             return jsonify({'error': 'Message is required and must be valid text'}), 400
-        
-        if not validate_user_id(user_id):
-            return jsonify({'error': 'Invalid user ID format'}), 400
         
         # Generate context-aware message using conversation history and knowledge base
         enhanced_message = generate_context_aware_response(message, user_id)
@@ -963,13 +1123,10 @@ def dify_direct_test():
         return jsonify({'error': str(e)})
 
 @app.route('/webhook/line', methods=['POST'])
+@require_line_auth
 def line_webhook():
     """LINE webhook handler - collect and save LINE messages"""
     try:
-        # Verify LINE signature for security
-        if not verify_line_signature(request):
-            logger.warning("Invalid LINE webhook signature")
-            return 'Unauthorized', 401
         
         body = request.get_json()
         
@@ -1194,6 +1351,7 @@ def import_external_data():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reminder', methods=['POST'])
+@require_auth(['write'])
 def create_reminder():
     """Create a new reminder"""
     try:
@@ -1202,13 +1360,10 @@ def create_reminder():
             return jsonify({'error': 'Invalid JSON'}), 400
             
         message = validate_input(data.get('message', ''), max_length=500)
-        user_id = data.get('user_id', 'anonymous')
+        user_id = str(g.current_user_id)  # 認証済みユーザーIDを使用
         
         if not message:
             return jsonify({'error': 'Message is required and must be valid text'}), 400
-            
-        if not validate_user_id(user_id):
-            return jsonify({'error': 'Invalid user ID format'}), 400
         
         # Process reminder request
         response = process_reminder_request(f"リマインダー {message}", user_id)
@@ -1222,13 +1377,11 @@ def create_reminder():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reminders', methods=['GET'])
+@require_auth(['read'])
 def get_user_reminders():
     """Get user's active reminders"""
     try:
-        user_id = request.args.get('user_id', 'anonymous')
-        
-        if not validate_user_id(user_id):
-            return jsonify({'error': 'Invalid user ID format'}), 400
+        user_id = str(g.current_user_id)  # 認証済みユーザーIDを使用
         
         if not supabase:
             return jsonify({'error': 'Database not configured'}), 500
@@ -1247,14 +1400,11 @@ def get_user_reminders():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reminder/<int:reminder_id>', methods=['DELETE'])
+@require_auth(['delete'])
 def delete_reminder(reminder_id):
     """Delete/deactivate a reminder"""
     try:
-        # Get user_id from request header or session (placeholder for auth)
-        user_id = request.args.get('user_id', 'anonymous')
-        
-        if not validate_user_id(user_id):
-            return jsonify({'error': 'Invalid user ID'}), 400
+        user_id = str(g.current_user_id)  # 認証済みユーザーIDを使用
             
         if not supabase:
             return jsonify({'error': 'Database not configured'}), 500
