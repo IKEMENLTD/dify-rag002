@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 ベテランAI - 認証システム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 400;
+            line-height: 1.8;
+            color: #1a202c;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(147, 197, 253, 0.05) 0%, transparent 50%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 98px,
+                    rgba(59, 130, 246, 0.02) 100px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 98px,
+                    rgba(99, 102, 241, 0.02) 100px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .auth-container {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            backdrop-filter: blur(40px);
+            box-shadow: 
+                0 60px 120px rgba(59, 130, 246, 0.08),
+                0 25px 50px rgba(0, 0, 0, 0.04),
+                0 12px 24px rgba(59, 130, 246, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                inset 0 -1px 0 rgba(59, 130, 246, 0.1);
+            border-radius: 32px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            width: 100%;
+            max-width: 480px;
+            margin: 20px;
+            position: relative;
+            z-index: 2;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .auth-container:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 
+                0 80px 160px rgba(59, 130, 246, 0.12),
+                0 40px 80px rgba(0, 0, 0, 0.06),
+                0 20px 40px rgba(59, 130, 246, 0.08),
+                inset 0 2px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -2px 0 rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .auth-header {
+            background: 
+                radial-gradient(ellipse at top, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+            color: white;
+            padding: 48px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+                0 10px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .auth-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .auth-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            letter-spacing: -0.5px;
+        }
+
+        .auth-header p {
+            opacity: 0.95;
+            font-size: 16px;
+            font-weight: 400;
+            position: relative;
+        }
+
+        .auth-form {
+            padding: 48px 32px;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 
+                0 1px 3px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 
+                0 0 0 4px rgba(59, 130, 246, 0.1),
+                0 4px 12px rgba(59, 130, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 16px;
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 24px rgba(59, 130, 246, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 
+                0 4px 8px rgba(59, 130, 246, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:disabled {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            box-shadow: 
+                0 8px 16px rgba(100, 116, 139, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+            box-shadow: 
+                0 12px 24px rgba(100, 116, 139, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        }
+
+        .divider span {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            padding: 0 16px;
+            position: relative;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #059669;
+            border: 1px solid #6ee7b7;
+        }
+
+        #app-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .app-container {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            backdrop-filter: blur(40px);
+            box-shadow: 
+                0 60px 120px rgba(59, 130, 246, 0.08),
+                0 25px 50px rgba(0, 0, 0, 0.04),
+                0 12px 24px rgba(59, 130, 246, 0.06);
+            border-radius: 32px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            padding: 48px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .welcome-section h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+
+        .welcome-section h2 {
+            font-size: 28px;
+            color: #475569;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.05),
+                0 4px 12px rgba(59, 130, 246, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% -50%, rgba(59, 130, 246, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.08),
+                0 8px 16px rgba(59, 130, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-email {
+            color: #475569;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 12px rgba(239, 68, 68, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 16px rgba(239, 68, 68, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s ease infinite;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .auth-container, .app-container {
+                margin: 10px;
+                padding: 32px 24px;
+            }
+
+            .auth-header {
+                padding: 32px 24px;
+            }
+
+            .auth-form {
+                padding: 32px 24px;
+            }
+
+            .welcome-section h1 {
+                font-size: 36px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .user-info {
+                position: static;
+                margin-bottom: 24px;
+                justify-content: space-between;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 認証セクション -->
+    <section id="auth-section">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>🤖 ベテランAI</h1>
+                <p>AIアシスタント＆リマインダーシステム</p>
+            </div>
+
+            <div class="auth-form">
+                <div id="auth-message"></div>
+
+                <!-- ログインフォーム -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">メールアドレス</label>
+                        <input type="email" id="login-email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">パスワード</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn" id="login-btn">ログイン</button>
+                    <button type="button" class="btn btn-secondary" onclick="showRegisterForm()">新規登録はこちら</button>
+                </form>
+
+                <!-- 登録フォーム -->
+                <form id="register-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="register-email">メールアドレス</label>
+                        <input type="email" id="register-email" placeholder="your@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">パスワード</label>
+                        <input type="password" id="register-password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password-confirm">パスワード（確認）</label>
+                        <input type="password" id="register-password-confirm" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn" id="register-btn">新規登録</button>
+                    <button type="button" class="btn btn-secondary" onclick="showLoginForm()">ログインに戻る</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- アプリケーションセクション -->
+    <section id="app-section">
+        <div class="app-container">
+            <div class="user-info">
+                <span class="user-email" id="user-email"></span>
+                <button class="logout-btn" onclick="logout()">ログアウト</button>
+            </div>
+
+            <div class="welcome-section">
+                <h1>🤖 ベテランAI</h1>
+                <h2>ようこそ、ベテランAIへ</h2>
+                <p>以下の機能をご利用いただけます：</p>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card" onclick="navigateTo('/chat')">
+                    <div class="feature-icon">💬</div>
+                    <div class="feature-title">AIチャット</div>
+                    <div class="feature-desc">高度なAIアシスタントと<br>対話できます</div>
+                </div>
+
+                <div class="feature-card" onclick="navigateTo('/reminders')">
+                    <div class="feature-icon">⏰</div>
+                    <div class="feature-title">リマインダー</div>
+                    <div class="feature-desc">大切な予定を<br>お知らせします</div>
+                </div>
+
+                <div class="feature-card" onclick="navigateTo('/history')">
+                    <div class="feature-icon">📚</div>
+                    <div class="feature-title">会話履歴</div>
+                    <div class="feature-desc">過去の会話を<br>振り返れます</div>
+                </div>
+
+                <div class="feature-card" onclick="navigateTo('/api-keys')">
+                    <div class="feature-icon">🔑</div>
+                    <div class="feature-title">API Key管理</div>
+                    <div class="feature-desc">開発者向け<br>API Key管理</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // トークンのローカルストレージキー
+        const TOKEN_KEY = 'veteran_ai_token';
+        const USER_KEY = 'veteran_ai_user';
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+
+            // フォームのサブミットイベント
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('register-form').addEventListener('submit', handleRegister);
+        });
+
+        // 認証状態チェック
+        function checkAuth() {
+            const token = localStorage.getItem(TOKEN_KEY);
+            const user = localStorage.getItem(USER_KEY);
+            
+            if (token && user) {
+                showApp(JSON.parse(user));
+            }
+        }
+
+        // ログイン処理
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = 'ログイン中<span class="loading"></span>';
+
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem(TOKEN_KEY, data.token);
+                    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+                    showMessage('ログインに成功しました', 'success');
+                    setTimeout(() => showApp(data.user), 1000);
+                } else {
+                    showMessage(data.error || 'ログインに失敗しました', 'error');
+                }
+            } catch (error) {
+                showMessage('エラーが発生しました', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'ログイン';
+            }
+        }
+
+        // 新規登録処理
+        async function handleRegister(e) {
+            e.preventDefault();
+            const btn = document.getElementById('register-btn');
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const passwordConfirm = document.getElementById('register-password-confirm').value;
+
+            if (password !== passwordConfirm) {
+                showMessage('パスワードが一致しません', 'error');
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '登録中<span class="loading"></span>';
+
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('登録に成功しました。ログインしてください。', 'success');
+                    setTimeout(() => showLoginForm(), 2000);
+                } else {
+                    showMessage(data.error || '登録に失敗しました', 'error');
+                }
+            } catch (error) {
+                showMessage('エラーが発生しました', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '新規登録';
+            }
+        }
+
+        // ログアウト処理
+        function logout() {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+            location.reload();
+        }
+
+        // メッセージ表示
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('auth-message');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // フォーム切り替え
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('auth-message').style.display = 'none';
+        }
+
+        function showRegisterForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('auth-message').style.display = 'none';
+        }
+
+        // アプリ表示
+        function showApp(user) {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-section').style.display = 'block';
+            document.getElementById('user-email').textContent = user.email;
+        }
+
+        // ナビゲーション
+        function navigateTo(path) {
+            // 実際のナビゲーションロジックをここに実装
+            alert(`${path} ページへ移動します（実装予定）`);
+        }
+    </script>
+</body>
+</html>

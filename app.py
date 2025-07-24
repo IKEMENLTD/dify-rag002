@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, make_response
 from flask_cors import CORS
 from functools import wraps
 import hmac
@@ -934,6 +934,133 @@ def revoke_share_link(share_token):
         logger.error(f"Revoke share error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/api-keys', methods=['GET'])
+@require_auth(['read'])
+def get_api_keys():
+    """Get user's API keys"""
+    try:
+        if not supabase:
+            return jsonify({'error': 'データベースが利用できません'}), 500
+        
+        api_keys = supabase.table('api_keys')\
+            .select('*')\
+            .eq('user_id', g.current_user_id)\
+            .order('created_at', desc=True)\
+            .execute()
+        
+        # キーの値を一部マスク
+        for key in api_keys.data:
+            if 'key' in key:
+                # 最初の10文字以外をマスク
+                if len(key['key']) > 10:
+                    key['key'] = key['key'][:10] + '•' * (len(key['key']) - 10)
+        
+        return jsonify({
+            'api_keys': api_keys.data
+        })
+        
+    except Exception as e:
+        logger.error(f"Get API keys error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/api-keys', methods=['POST'])
+@require_auth(['write'])
+def create_api_key():
+    """Create new API key"""
+    try:
+        if not supabase:
+            return jsonify({'error': 'データベースが利用できません'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'リクエストデータが必要です'}), 400
+        
+        name = validate_input(data.get('name'), 100)
+        permissions = data.get('permissions', ['read'])
+        
+        if not name:
+            return jsonify({'error': '有効な名前が必要です'}), 400
+        
+        # APIキーを生成
+        api_key = f"sk-{secrets.token_urlsafe(32)}"
+        
+        api_key_data = {
+            'user_id': g.current_user_id,
+            'key': api_key,
+            'name': name,
+            'permissions': permissions,
+            'is_active': True,
+            'created_at': datetime.utcnow().isoformat()
+        }
+        
+        result = supabase.table('api_keys').insert(api_key_data).execute()
+        
+        if result.data:
+            # 完全なキーを返す（作成時のみ）
+            return jsonify({
+                'success': True,
+                'api_key': result.data[0],
+                'message': 'APIキーを作成しました。このキーは二度と表示されません。'
+            })
+        else:
+            return jsonify({'error': 'APIキーの作成に失敗しました'}), 500
+        
+    except Exception as e:
+        logger.error(f"Create API key error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/api-keys/<key_id>', methods=['PATCH'])
+@require_auth(['write'])
+def update_api_key(key_id):
+    """Update API key status"""
+    try:
+        if not supabase:
+            return jsonify({'error': 'データベースが利用できません'}), 500
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'リクエストデータが必要です'}), 400
+        
+        is_active = data.get('is_active')
+        
+        result = supabase.table('api_keys')\
+            .update({'is_active': is_active})\
+            .eq('id', key_id)\
+            .eq('user_id', g.current_user_id)\
+            .execute()
+        
+        return jsonify({
+            'success': True,
+            'message': 'APIキーを更新しました'
+        })
+        
+    except Exception as e:
+        logger.error(f"Update API key error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/api-keys/<key_id>', methods=['DELETE'])
+@require_auth(['write'])
+def delete_api_key(key_id):
+    """Delete API key"""
+    try:
+        if not supabase:
+            return jsonify({'error': 'データベースが利用できません'}), 500
+        
+        result = supabase.table('api_keys')\
+            .delete()\
+            .eq('id', key_id)\
+            .eq('user_id', g.current_user_id)\
+            .execute()
+        
+        return jsonify({
+            'success': True,
+            'message': 'APIキーを削除しました'
+        })
+        
+    except Exception as e:
+        logger.error(f"Delete API key error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/manual')
 @app.route('/user_manual.html')
 def user_manual():
@@ -942,7 +1069,90 @@ def user_manual():
         with open('user_manual.html', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
-        return "マニュアルファイルが見つかりません", 404
+        return jsonify({'error': 'ファイルが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"Manual load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# 機能ページのルート
+@app.route('/chat.html')
+def chat_page():
+    """AIチャットページ"""
+    try:
+        with open('chat.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify({'error': 'チャットページが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"Chat page load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/reminders.html')
+def reminders_page():
+    """リマインダーページ"""
+    try:
+        with open('reminders.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify({'error': 'リマインダーページが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"Reminders page load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/history.html')
+def history_page():
+    """会話履歴ページ"""
+    try:
+        with open('history.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify({'error': '履歴ページが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"History page load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api-keys.html')
+def api_keys_page():
+    """APIキー管理ページ"""
+    try:
+        with open('api-keys.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify({'error': 'APIキーページが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"API keys page load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# 共通リソースのルート
+@app.route('/common-utils.js')
+def common_utils():
+    """共通JavaScriptライブラリ"""
+    try:
+        with open('common-utils.js', 'r', encoding='utf-8') as f:
+            content = f.read()
+            response = make_response(content)
+            response.headers['Content-Type'] = 'application/javascript'
+            return response
+    except FileNotFoundError:
+        return jsonify({'error': 'common-utils.jsが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"Common utils load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/styles.css')
+def styles_css():
+    """共通スタイルシート"""
+    try:
+        with open('styles.css', 'r', encoding='utf-8') as f:
+            content = f.read()
+            response = make_response(content)
+            response.headers['Content-Type'] = 'text/css'
+            return response
+    except FileNotFoundError:
+        return jsonify({'error': 'styles.cssが見つかりません'}), 404
+    except Exception as e:
+        logger.error(f"Styles load error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/ping')
 def ping():

@@ -52,103 +52,88 @@
                     rgba(99, 102, 241, 0.02) 100px
                 );
             pointer-events: none;
-            z-index: 1;
+            z-index: -1;
         }
 
-        .auth-container {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            backdrop-filter: blur(40px);
-            box-shadow: 
-                0 60px 120px rgba(59, 130, 246, 0.08),
-                0 25px 50px rgba(0, 0, 0, 0.04),
-                0 12px 24px rgba(59, 130, 246, 0.06),
-                inset 0 1px 0 rgba(255, 255, 255, 0.7),
-                inset 0 -1px 0 rgba(59, 130, 246, 0.1);
-            border-radius: 32px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            overflow: hidden;
+        /* コンテナ */
+        .container {
             width: 100%;
-            max-width: 480px;
-            margin: 20px;
-            position: relative;
-            z-index: 2;
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
         }
 
-        .auth-container:hover {
-            transform: translateY(-8px) scale(1.01);
+        /* 認証コンテナ */
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
             box-shadow: 
-                0 80px 160px rgba(59, 130, 246, 0.12),
-                0 40px 80px rgba(0, 0, 0, 0.06),
-                0 20px 40px rgba(59, 130, 246, 0.08),
-                inset 0 2px 0 rgba(255, 255, 255, 0.9),
-                inset 0 -2px 0 rgba(59, 130, 246, 0.15);
-            border-color: rgba(59, 130, 246, 0.2);
-        }
-
-        .auth-header {
-            background: 
-                radial-gradient(ellipse at top, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-            color: white;
-            padding: 48px 32px;
-            text-align: center;
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 8px 32px rgba(59, 130, 246, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 48px;
+            max-width: 500px;
+            margin: 0 auto;
             position: relative;
-            overflow: hidden;
-            box-shadow: 
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-                0 10px 20px rgba(59, 130, 246, 0.2);
         }
 
-        .auth-header::before {
+        .auth-container::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-            animation: shimmer 3s ease-in-out infinite;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8);
+            border-radius: 32px 32px 0 0;
         }
 
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        /* 認証ヘッダー */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 40px;
         }
 
         .auth-header h1 {
-            font-size: 32px;
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .auth-header h2 {
+            font-size: 28px;
             font-weight: 700;
+            color: #1e293b;
             margin-bottom: 12px;
-            position: relative;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            letter-spacing: -0.5px;
         }
 
         .auth-header p {
-            opacity: 0.95;
             font-size: 16px;
-            font-weight: 400;
-            position: relative;
+            color: #64748b;
+            line-height: 1.6;
         }
 
+        /* フォーム */
         .auth-form {
-            padding: 48px 32px;
+            margin-bottom: 32px;
         }
 
         .form-group {
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: #1e293b;
             font-size: 14px;
-            letter-spacing: 0.3px;
         }
 
         .form-group input {
@@ -159,9 +144,6 @@
             font-size: 16px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: rgba(255, 255, 255, 0.8);
-            box-shadow: 
-                0 1px 3px rgba(0, 0, 0, 0.04),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
         }
 
         .form-group input:focus {
@@ -170,18 +152,13 @@
             background: white;
             box-shadow: 
                 0 0 0 4px rgba(59, 130, 246, 0.1),
-                0 4px 12px rgba(59, 130, 246, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 1);
-            transform: translateY(-2px);
-        }
-
-        .form-group input::placeholder {
-            color: #94a3b8;
+                0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-1px);
         }
 
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 18px 24px;
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
@@ -190,207 +167,151 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 16px;
             box-shadow: 
                 0 8px 16px rgba(59, 130, 246, 0.3),
-                0 4px 8px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+                0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
         }
 
         .btn:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             transform: translateY(-2px);
             box-shadow: 
                 0 12px 24px rgba(59, 130, 246, 0.4),
-                0 6px 12px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-        }
-
-        .btn:hover::before {
-            left: 100%;
+                0 6px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn:active {
             transform: translateY(0);
-            box-shadow: 
-                0 4px 8px rgba(59, 130, 246, 0.3),
-                0 2px 4px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
         }
 
         .btn:disabled {
             background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
             cursor: not-allowed;
-            box-shadow: none;
             transform: none;
+            box-shadow: none;
         }
 
         .btn-secondary {
             background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-            box-shadow: 
-                0 8px 16px rgba(100, 116, 139, 0.3),
-                0 4px 8px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
         }
 
         .btn-secondary:hover {
-            background: linear-gradient(135deg, #475569 0%, #334155 100%);
-            box-shadow: 
-                0 12px 24px rgba(100, 116, 139, 0.4),
-                0 6px 12px rgba(0, 0, 0, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
         }
 
-        .divider {
-            text-align: center;
-            margin: 24px 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
-        }
-
-        .divider span {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            padding: 0 16px;
-            position: relative;
-            color: #64748b;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .alert {
-            padding: 16px 20px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            font-size: 14px;
-            animation: slideIn 0.3s ease-out;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .alert-error {
-            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-            color: #dc2626;
-            border: 1px solid #fca5a5;
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-            color: #059669;
-            border: 1px solid #6ee7b7;
-        }
-
-        #app-section {
-            display: none;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
+        /* アプリセクション */
         .app-container {
-            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
-            backdrop-filter: blur(40px);
-            box-shadow: 
-                0 60px 120px rgba(59, 130, 246, 0.08),
-                0 25px 50px rgba(0, 0, 0, 0.04),
-                0 12px 24px rgba(59, 130, 246, 0.06);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
             border-radius: 32px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 8px 32px rgba(59, 130, 246, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.1);
             padding: 48px;
-            width: 100%;
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
             position: relative;
-            z-index: 2;
         }
 
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8);
+            border-radius: 32px 32px 0 0;
+        }
+
+        /* ユーザー情報 */
+        .user-info {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 12px 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-email {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        /* ウェルカムセクション */
         .welcome-section {
             text-align: center;
             margin-bottom: 48px;
+            padding-top: 40px;
         }
 
         .welcome-section h1 {
             font-size: 48px;
             font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 16px;
-            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
         }
 
         .welcome-section h2 {
             font-size: 28px;
-            color: #475569;
-            font-weight: 500;
-            margin-bottom: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 16px;
         }
 
+        .welcome-section p {
+            font-size: 18px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* 機能グリッド */
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 24px;
-            margin-bottom: 48px;
         }
 
         .feature-card {
-            background: white;
-            border-radius: 20px;
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 24px;
             padding: 32px;
             text-align: center;
-            box-shadow: 
-                0 10px 30px rgba(0, 0, 0, 0.05),
-                0 4px 12px rgba(59, 130, 246, 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.05),
+                0 2px 8px rgba(59, 130, 246, 0.05);
             position: relative;
             overflow: hidden;
         }
@@ -401,111 +322,97 @@
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 50% -50%, rgba(59, 130, 246, 0.1), transparent 70%);
-            opacity: 0;
-            transition: opacity 0.3s;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            transform: scaleX(0);
+            transition: transform 0.3s;
         }
 
         .feature-card:hover {
-            transform: translateY(-8px) scale(1.02);
+            transform: translateY(-8px);
             box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.08),
-                0 8px 16px rgba(59, 130, 246, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 1);
-            border-color: rgba(59, 130, 246, 0.3);
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.2);
         }
 
         .feature-card:hover::before {
-            opacity: 1;
+            transform: scaleX(1);
         }
 
         .feature-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
         }
 
         .feature-title {
             font-size: 20px;
             font-weight: 700;
             color: #1e293b;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .feature-desc {
+            font-size: 16px;
             color: #64748b;
-            font-size: 14px;
             line-height: 1.6;
         }
 
-        .user-info {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        /* 非表示クラス */
+        .hidden {
+            display: none;
         }
 
-        .user-email {
-            color: #475569;
+        /* アラート */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
             font-size: 14px;
             font-weight: 500;
         }
 
-        .logout-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 4px 12px rgba(239, 68, 68, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
         }
 
-        .logout-btn:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transform: translateY(-2px);
-            box-shadow: 
-                0 6px 16px rgba(239, 68, 68, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s ease infinite;
-            vertical-align: middle;
-            margin-left: 8px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .alert-info {
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
         }
 
         /* レスポンシブ対応 */
         @media (max-width: 768px) {
             .auth-container, .app-container {
-                margin: 10px;
-                padding: 32px 24px;
+                margin: 3px;
+                padding: 16px 3px;
             }
 
             .auth-header {
-                padding: 32px 24px;
+                padding: 16px 3px;
             }
 
             .auth-form {
-                padding: 32px 24px;
+                padding: 16px 3px;
+            }
+            
+            .feature-card {
+                margin: 0 3px;
+                padding: 16px 8px;
+            }
+            
+            .welcome-section {
+                padding: 0 3px;
             }
 
             .welcome-section h1 {
@@ -522,60 +429,79 @@
                 justify-content: space-between;
             }
         }
+
+        @media (max-width: 480px) {
+            .auth-container, .app-container {
+                padding: 12px 3px;
+                margin: 3px;
+            }
+
+            .feature-card {
+                padding: 12px 6px;
+                margin: 0 3px;
+            }
+
+            .auth-header h1,
+            .welcome-section h1 {
+                font-size: 28px;
+            }
+
+            .auth-header h2,
+            .welcome-section h2 {
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- 認証セクション -->
-    <section id="auth-section">
-        <div class="auth-container">
+    <div class="container">
+        <!-- 認証セクション -->
+        <div id="auth-section" class="auth-container">
             <div class="auth-header">
                 <h1>🤖 ベテランAI</h1>
-                <p>AIアシスタント＆リマインダーシステム</p>
+                <h2>Ver.003</h2>
+                <p>AIアシスタント & リマインダーシステム</p>
             </div>
 
-            <div class="auth-form">
-                <div id="auth-message"></div>
+            <div id="alert-container"></div>
 
-                <!-- ログインフォーム -->
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">メールアドレス</label>
-                        <input type="email" id="login-email" placeholder="your@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">パスワード</label>
-                        <input type="password" id="login-password" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="btn" id="login-btn">ログイン</button>
-                    <button type="button" class="btn btn-secondary" onclick="showRegisterForm()">新規登録はこちら</button>
-                </form>
+            <!-- ログインフォーム -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="login-email">メールアドレス</label>
+                    <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">パスワード</label>
+                    <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn" id="login-btn">ログイン</button>
+                <button type="button" class="btn btn-secondary" onclick="showRegisterForm()">新規登録はこちら</button>
+            </form>
 
-                <!-- 登録フォーム -->
-                <form id="register-form" style="display: none;">
-                    <div class="form-group">
-                        <label for="register-email">メールアドレス</label>
-                        <input type="email" id="register-email" placeholder="your@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">パスワード</label>
-                        <input type="password" id="register-password" placeholder="••••••••" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password-confirm">パスワード（確認）</label>
-                        <input type="password" id="register-password-confirm" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="btn" id="register-btn">新規登録</button>
-                    <button type="button" class="btn btn-secondary" onclick="showLoginForm()">ログインに戻る</button>
-                </form>
-            </div>
+            <!-- 新規登録フォーム -->
+            <form id="register-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="register-email">メールアドレス</label>
+                    <input type="email" id="register-email" placeholder="your@email.com" autocomplete="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">パスワード</label>
+                    <input type="password" id="register-password" placeholder="••••••••" autocomplete="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password-confirm">パスワード（確認）</label>
+                    <input type="password" id="register-password-confirm" placeholder="••••••••" autocomplete="new-password" required>
+                </div>
+                <button type="submit" class="btn" id="register-btn">新規登録</button>
+                <button type="button" class="btn btn-secondary" onclick="showLoginForm()">ログインに戻る</button>
+            </form>
         </div>
-    </section>
 
-    <!-- アプリケーションセクション -->
-    <section id="app-section">
-        <div class="app-container">
+        <!-- アプリセクション -->
+        <div id="app-section" class="app-container hidden">
             <div class="user-info">
-                <span class="user-email" id="user-email"></span>
+                <span class="user-email" id="user-email">user@example.com</span>
                 <button class="logout-btn" onclick="logout()">ログアウト</button>
             </div>
 
@@ -611,149 +537,240 @@
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
     <script>
-        // トークンのローカルストレージキー
-        const TOKEN_KEY = 'veteran_ai_token';
-        const USER_KEY = 'veteran_ai_user';
+        // グローバル変数
+        let isLoginMode = true;
+
+        // DOM要素
+        const authSection = document.getElementById('auth-section');
+        const appSection = document.getElementById('app-section');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const alertContainer = document.getElementById('alert-container');
 
         // 初期化
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-
-            // フォームのサブミットイベント
-            document.getElementById('login-form').addEventListener('submit', handleLogin);
-            document.getElementById('register-form').addEventListener('submit', handleRegister);
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+            setupEventListeners();
         });
 
-        // 認証状態チェック
-        function checkAuth() {
-            const token = localStorage.getItem(TOKEN_KEY);
-            const user = localStorage.getItem(USER_KEY);
+        function setupEventListeners() {
+            loginForm.addEventListener('submit', handleLogin);
+            registerForm.addEventListener('submit', handleRegister);
+        }
+
+        // 認証状態確認
+        async function checkAuthStatus() {
+            const token = localStorage.getItem('veteran_ai_token');
+            const user = localStorage.getItem('veteran_ai_user');
             
             if (token && user) {
-                showApp(JSON.parse(user));
+                try {
+                    const response = await fetch('/api/auth/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const userData = JSON.parse(user);
+                        showAppSection(userData);
+                        return;
+                    }
+                } catch (error) {
+                    console.error('認証確認エラー:', error);
+                }
+                
+                // トークンが無効な場合はクリア
+                localStorage.removeItem('veteran_ai_token');
+                localStorage.removeItem('veteran_ai_user');
             }
         }
 
         // ログイン処理
         async function handleLogin(e) {
             e.preventDefault();
-            const btn = document.getElementById('login-btn');
+            
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
-
+            const loginBtn = document.getElementById('login-btn');
+            
+            if (!email || !password) {
+                showAlert('メールアドレスとパスワードを入力してください', 'error');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'ログイン中...';
+            
             try {
-                btn.disabled = true;
-                btn.innerHTML = 'ログイン中<span class="loading"></span>';
-
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ email, password })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (response.ok) {
-                    localStorage.setItem(TOKEN_KEY, data.token);
-                    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-                    showMessage('ログインに成功しました', 'success');
-                    setTimeout(() => showApp(data.user), 1000);
+                    localStorage.setItem('veteran_ai_token', data.token);
+                    localStorage.setItem('veteran_ai_user', JSON.stringify(data.user));
+                    showAlert('ログインしました！', 'success');
+                    
+                    setTimeout(() => {
+                        showAppSection(data.user);
+                    }, 1000);
                 } else {
-                    showMessage(data.error || 'ログインに失敗しました', 'error');
+                    showAlert(data.error || 'ログインに失敗しました', 'error');
                 }
             } catch (error) {
-                showMessage('エラーが発生しました', 'error');
+                console.error('ログインエラー:', error);
+                showAlert('ネットワークエラーが発生しました', 'error');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'ログイン';
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'ログイン';
             }
         }
 
         // 新規登録処理
         async function handleRegister(e) {
             e.preventDefault();
-            const btn = document.getElementById('register-btn');
+            
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
-            const passwordConfirm = document.getElementById('register-password-confirm').value;
-
-            if (password !== passwordConfirm) {
-                showMessage('パスワードが一致しません', 'error');
+            const confirmPassword = document.getElementById('register-password-confirm').value;
+            const registerBtn = document.getElementById('register-btn');
+            
+            if (!email || !password || !confirmPassword) {
+                showAlert('すべての項目を入力してください', 'error');
                 return;
             }
-
+            
+            if (password !== confirmPassword) {
+                showAlert('パスワードが一致しません', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('パスワードは6文字以上で入力してください', 'error');
+                return;
+            }
+            
+            registerBtn.disabled = true;
+            registerBtn.textContent = '登録中...';
+            
             try {
-                btn.disabled = true;
-                btn.innerHTML = '登録中<span class="loading"></span>';
-
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({ email, password })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (response.ok) {
-                    showMessage('登録に成功しました。ログインしてください。', 'success');
-                    setTimeout(() => showLoginForm(), 2000);
+                    showAlert('登録が完了しました！ログインしてください。', 'success');
+                    setTimeout(() => {
+                        showLoginForm();
+                    }, 2000);
                 } else {
-                    showMessage(data.error || '登録に失敗しました', 'error');
+                    showAlert(data.error || '登録に失敗しました', 'error');
                 }
             } catch (error) {
-                showMessage('エラーが発生しました', 'error');
+                console.error('登録エラー:', error);
+                showAlert('ネットワークエラーが発生しました', 'error');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '新規登録';
+                registerBtn.disabled = false;
+                registerBtn.textContent = '新規登録';
             }
         }
 
-        // ログアウト処理
+        // ログアウト
         function logout() {
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(USER_KEY);
-            location.reload();
-        }
-
-        // メッセージ表示
-        function showMessage(message, type) {
-            const messageDiv = document.getElementById('auth-message');
-            messageDiv.className = `alert alert-${type}`;
-            messageDiv.textContent = message;
-            messageDiv.style.display = 'block';
+            localStorage.removeItem('veteran_ai_token');
+            localStorage.removeItem('veteran_ai_user');
             
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 5000);
+            appSection.classList.add('hidden');
+            authSection.classList.remove('hidden');
+            
+            showAlert('ログアウトしました', 'info');
         }
 
         // フォーム切り替え
         function showLoginForm() {
-            document.getElementById('login-form').style.display = 'block';
-            document.getElementById('register-form').style.display = 'none';
-            document.getElementById('auth-message').style.display = 'none';
+            isLoginMode = true;
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            clearAlert();
         }
 
         function showRegisterForm() {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('register-form').style.display = 'block';
-            document.getElementById('auth-message').style.display = 'none';
+            isLoginMode = false;
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            clearAlert();
         }
 
-        // アプリ表示
-        function showApp(user) {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('app-section').style.display = 'block';
+        // アプリセクション表示
+        function showAppSection(user) {
+            authSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
             document.getElementById('user-email').textContent = user.email;
         }
 
-        // ナビゲーション
+        // 改善されたナビゲーション
         function navigateTo(path) {
-            // 実際のナビゲーションロジックをここに実装
-            alert(`${path} ページへ移動します（実装予定）`);
+            console.log('Navigating to:', path);
+            
+            try {
+                // パスに基づいて適切なページへ遷移
+                switch(path) {
+                    case '/chat':
+                        window.location.href = './chat.html';
+                        break;
+                    case '/reminders':
+                        window.location.href = './reminders.html';
+                        break;
+                    case '/history':
+                        window.location.href = './history.html';
+                        break;
+                    case '/api-keys':
+                        window.location.href = './api-keys.html';
+                        break;
+                    default:
+                        console.error('Invalid path:', path);
+                        alert('ページが見つかりません: ' + path);
+                }
+            } catch (error) {
+                console.error('Navigation error:', error);
+                alert('ナビゲーションエラーが発生しました');
+            }
+        }
+
+        // アラート表示
+        function showAlert(message, type = 'info') {
+            clearAlert();
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.appendChild(alertDiv);
+            
+            // 5秒後に自動削除
+            setTimeout(() => {
+                clearAlert();
+            }, 5000);
+        }
+
+        function clearAlert() {
+            alertContainer.innerHTML = '';
         }
     </script>
 </body>

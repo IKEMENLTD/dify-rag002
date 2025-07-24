@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 会話履歴 - ベテランAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 16px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
+        }
+
+        /* メインコンテナ */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 24px 24px;
+        }
+
+        /* フィルターセクション */
+        .filter-section {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        /* 会話リスト */
+        .conversations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .conversation-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.05),
+                0 4px 12px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 24px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .conversation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .conversation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.08),
+                0 8px 16px rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .conversation-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .conversation-date {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .conversation-preview {
+            margin-bottom: 16px;
+        }
+
+        .message-preview {
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            text-align: right;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .conversation-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message-count {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            padding: 8px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .icon-btn:hover {
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 会話詳細モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            padding: 32px;
+            animation: modalIn 0.3s ease-out;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #e2e8f0;
+            transform: rotate(90deg);
+        }
+
+        .modal-messages {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .modal-message {
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-user-message {
+            background: white;
+            margin-left: 40px;
+            border: 1px solid #3b82f6;
+        }
+
+        .modal-ai-message {
+            background: white;
+            margin-right: 40px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* ページネーション */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 48px;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .page-btn:hover:not(.active):not(:disabled) {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 96px 24px;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 96px;
+            margin-bottom: 24px;
+        }
+
+        .empty-text {
+            font-size: 24px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .empty-subtext {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 80px 16px 16px;
+            }
+
+            .conversations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 24px;
+            }
+
+            .modal-messages {
+                padding: 12px;
+            }
+
+            .modal-user-message,
+            .modal-ai-message {
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <span>📚</span>
+                <span>会話履歴</span>
+            </h1>
+            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+                ← 戻る
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- フィルターセクション -->
+        <div class="filter-section">
+            <input type="text" class="search-input" id="search-input" 
+                   placeholder="会話を検索...">
+            <button class="filter-btn" onclick="searchConversations()">
+                🔍 検索
+            </button>
+        </div>
+
+        <!-- 会話リスト -->
+        <div class="conversations-grid" id="conversations-grid">
+            <div class="empty-state">
+                <div class="empty-icon">💬</div>
+                <div class="empty-text">会話履歴がありません</div>
+                <div class="empty-subtext">AIチャットで会話を始めましょう</div>
+            </div>
+        </div>
+
+        <!-- ページネーション -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- 会話詳細モーダル -->
+    <div class="modal" id="conversation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">会話の詳細</h2>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-messages" id="modal-messages"></div>
+            <div class="modal-actions">
+                <button class="filter-btn" onclick="shareConversation()">
+                    🔗 共有リンクを作成
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast-container" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+    "></div>
+
+    <script>
+        // セキュリティユーティリティ
+        class SecurityUtils {
+            // HTMLエスケープ（XSS対策）
+            static escapeHtml(text) {
+                if (typeof text !== 'string') return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 入力値の厳格な検証
+            static validateInput(value, type = 'text', maxLength = 1000) {
+                if (typeof value !== 'string') return '';
+                
+                // 基本的なサニタイズ
+                let sanitized = value.trim();
+                
+                // 長さチェック
+                if (sanitized.length > maxLength) {
+                    throw new Error(`入力値が長すぎます（最大${maxLength}文字）`);
+                }
+                
+                // XSSパターンの検出
+                const xssPatterns = [
+                    /<script[^>]*>.*?<\/script>/gi,
+                    /javascript:/gi,
+                    /on\w+\s*=/gi,
+                    /<iframe[^>]*>/gi,
+                    /<object[^>]*>/gi,
+                    /<embed[^>]*>/gi
+                ];
+                
+                for (const pattern of xssPatterns) {
+                    if (pattern.test(sanitized)) {
+                        throw new Error('不正な文字が含まれています');
+                    }
+                }
+                
+                return sanitized;
+            }
+        }
+
+        // トークン管理クラス
+        class TokenManager {
+            static TOKEN_KEY = 'veteran_ai_token';
+            static TOKEN_EXPIRY_KEY = 'veteran_ai_token_expiry';
+            
+            static getToken() {
+                const token = localStorage.getItem(this.TOKEN_KEY);
+                const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+                
+                if (!token) return null;
+                
+                // トークンの有効期限チェック
+                if (expiry && new Date(expiry) < new Date()) {
+                    this.clearToken();
+                    return null;
+                }
+                
+                return token;
+            }
+            
+            static setToken(token, expiryHours = 24) {
+                const expiry = new Date();
+                expiry.setHours(expiry.getHours() + expiryHours);
+                
+                localStorage.setItem(this.TOKEN_KEY, token);
+                localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiry.toISOString());
+            }
+            
+            static clearToken() {
+                localStorage.removeItem(this.TOKEN_KEY);
+                localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+            }
+            
+            static isTokenValid() {
+                return this.getToken() !== null;
+            }
+        }
+
+        // エラーハンドリングクラス
+        class ErrorHandler {
+            static handle(error, context = '') {
+                console.error(`Error in ${context}:`, error);
+                
+                let message = 'エラーが発生しました';
+                
+                if (error.message) {
+                    message = error.message;
+                } else if (typeof error === 'string') {
+                    message = error;
+                }
+                
+                // セキュリティ上の理由で詳細なエラー情報を隠す
+                if (message.includes('fetch')) {
+                    message = '通信エラーが発生しました';
+                }
+                
+                ToastManager.showError(message);
+                return false;
+            }
+            
+            static async handleResponse(response) {
+                if (!response.ok) {
+                    let errorMessage = 'サーバーエラーが発生しました';
+                    
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    } catch (e) {
+                        // JSONパースエラーの場合はデフォルトメッセージを使用
+                    }
+                    
+                    if (response.status === 401) {
+                        TokenManager.clearToken();
+                        window.location.href = '/frontend_auth.html';
+                        return;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                return response;
+            }
+        }
+
+        // トースト通知システム
+        class ToastManager {
+            static showSuccess(message) {
+                this.show(message, 'success');
+            }
+            
+            static showError(message) {
+                this.show(message, 'error');
+            }
+            
+            static showInfo(message) {
+                this.show(message, 'info');
+            }
+            
+            static show(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'polite');
+                toast.style.cssText = `
+                    padding: 16px 24px;
+                    margin-bottom: 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                    font-weight: 500;
+                    font-size: 14px;
+                    max-width: 400px;
+                    opacity: 0;
+                    transform: translateX(100%);
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                `;
+                
+                // タイプごとの色設定
+                switch (type) {
+                    case 'success':
+                        toast.style.backgroundColor = '#dcfce7';
+                        toast.style.color = '#16a34a';
+                        toast.style.border = '1px solid #bbf7d0';
+                        break;
+                    case 'error':
+                        toast.style.backgroundColor = '#fee2e2';
+                        toast.style.color = '#dc2626';
+                        toast.style.border = '1px solid #fecaca';
+                        break;
+                    default:
+                        toast.style.backgroundColor = '#e0f2fe';
+                        toast.style.color = '#0369a1';
+                        toast.style.border = '1px solid #bae6fd';
+                }
+                
+                toast.textContent = message;
+                
+                // クリックで閉じる
+                toast.addEventListener('click', () => {
+                    this.remove(toast);
+                });
+                
+                container.appendChild(toast);
+                
+                // アニメーション
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(0)';
+                });
+                
+                // 自動で閉じる
+                setTimeout(() => {
+                    this.remove(toast);
+                }, type === 'error' ? 5000 : 3000);
+            }
+            
+            static remove(toast) {
+                if (!toast || !toast.parentNode) return;
+                
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // DOM操作ヘルパー
+        class DOMHelper {
+            // 安全な要素作成
+            static createElement(tag, options = {}) {
+                const element = document.createElement(tag);
+                
+                if (options.className) {
+                    element.className = options.className;
+                }
+                
+                if (options.textContent) {
+                    element.textContent = options.textContent;
+                }
+                
+                if (options.attributes) {
+                    Object.entries(options.attributes).forEach(([key, value]) => {
+                        element.setAttribute(key, value);
+                    });
+                }
+                
+                if (options.eventListeners) {
+                    Object.entries(options.eventListeners).forEach(([event, handler]) => {
+                        element.addEventListener(event, handler);
+                    });
+                }
+                
+                return element;
+            }
+            
+            // 安全なHTML挿入
+            static setContent(element, content) {
+                element.textContent = '';
+                if (typeof content === 'string') {
+                    element.textContent = content;
+                } else if (content instanceof Node) {
+                    element.appendChild(content);
+                } else if (Array.isArray(content)) {
+                    content.forEach(item => {
+                        if (typeof item === 'string') {
+                            const textNode = document.createTextNode(item);
+                            element.appendChild(textNode);
+                        } else if (item instanceof Node) {
+                            element.appendChild(item);
+                        }
+                    });
+                }
+            }
+        }
+
+        // 現在のページとデータ
+        let currentPage = 1;
+        let totalPages = 1;
+        let allConversations = [];
+        let currentConversationId = null;
+        let searchQuery = '';
+
+        // トークンの取得
+        function getAuthToken() {
+            return TokenManager.getToken();
+        }
+
+        // 会話履歴の取得
+        async function loadConversations(page = 1) {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = '/frontend_auth.html';
+                return;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒タイムアウト
+
+            try {
+                const pageNum = Math.max(1, parseInt(page) || 1);
+                
+                const response = await fetch(`/api/conversations?page=${pageNum}&limit=9`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                const data = await response.json();
+
+                if (data.conversations && Array.isArray(data.conversations)) {
+                    allConversations = data.conversations;
+                    currentPage = data.page || pageNum;
+                    totalPages = data.total_pages || 1;
+                    
+                    displayConversations();
+                    updatePagination();
+                } else {
+                    allConversations = [];
+                    displayConversations();
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'loadConversations');
+                } else {
+                    ErrorHandler.handle(error, 'loadConversations');
+                }
+                displayError();
+            }
+        }
+
+        // 会話の表示
+        function displayConversations() {
+            const grid = document.getElementById('conversations-grid');
+            
+            try {
+                // 検索フィルタリング
+                let filteredConversations = allConversations || [];
+                if (searchQuery) {
+                    const sanitizedQuery = SecurityUtils.validateInput(searchQuery, 'text', 100);
+                    if (sanitizedQuery) {
+                        filteredConversations = allConversations.filter(conv => {
+                            const message = (conv.message || '').toLowerCase();
+                            const response = (conv.response || '').toLowerCase();
+                            const query = sanitizedQuery.toLowerCase();
+                            return message.includes(query) || response.includes(query);
+                        });
+                    }
+                }
+
+                if (filteredConversations.length === 0) {
+                    const emptyState = DOMHelper.createElement('div', {
+                        className: 'empty-state',
+                        attributes: { 'role': 'status', 'aria-live': 'polite' }
+                    });
+                    
+                    const emptyIcon = DOMHelper.createElement('div', {
+                        className: 'empty-icon',
+                        textContent: '💬'
+                    });
+                    
+                    const emptyText = DOMHelper.createElement('div', {
+                        className: 'empty-text',
+                        textContent: '会話履歴がありません'
+                    });
+                    
+                    const emptySubtext = DOMHelper.createElement('div', {
+                        className: 'empty-subtext',
+                        textContent: 'AIチャットで会話を始めましょう'
+                    });
+                    
+                    emptyState.appendChild(emptyIcon);
+                    emptyState.appendChild(emptyText);
+                    emptyState.appendChild(emptySubtext);
+                    
+                    grid.textContent = '';
+                    grid.appendChild(emptyState);
+                    return;
+                }
+
+                // 会話をグループ化
+                const groupedConversations = {};
+                filteredConversations.forEach(conv => {
+                    if (conv && conv.conversation_id) {
+                        const convId = conv.conversation_id;
+                        if (!groupedConversations[convId]) {
+                            groupedConversations[convId] = [];
+                        }
+                        groupedConversations[convId].push(conv);
+                    }
+                });
+
+                // カードを生成
+                const fragment = document.createDocumentFragment();
+                
+                Object.entries(groupedConversations).forEach(([convId, messages]) => {
+                    try {
+                        if (!messages || messages.length === 0) return;
+                        
+                        const firstMessage = messages[0];
+                        const lastMessage = messages[messages.length - 1];
+                        const date = new Date(firstMessage.created_at);
+                        const dateStr = isNaN(date.getTime()) ? '不明' : date.toLocaleDateString('ja-JP');
+                        const timeStr = isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+
+                        // 会話カードを作成
+                        const conversationCard = DOMHelper.createElement('div', {
+                            className: 'conversation-card',
+                            attributes: {
+                                'role': 'button',
+                                'tabindex': '0',
+                                'aria-label': `会話: ${SecurityUtils.escapeHtml(truncate(firstMessage.message || '', 30))}`,
+                                'data-conversation-id': convId
+                            },
+                            eventListeners: {
+                                'click': () => showConversationDetail(convId),
+                                'keydown': (e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        showConversationDetail(convId);
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // 日付
+                        const conversationDate = DOMHelper.createElement('div', {
+                            className: 'conversation-date'
+                        });
+                        
+                        const dateSpan = DOMHelper.createElement('span', {
+                            textContent: `📅 ${dateStr} ${timeStr}`
+                        });
+                        
+                        conversationDate.appendChild(dateSpan);
+                        
+                        // プレビュー
+                        const conversationPreview = DOMHelper.createElement('div', {
+                            className: 'conversation-preview'
+                        });
+                        
+                        const userMessage = DOMHelper.createElement('div', {
+                            className: 'message-preview user-message',
+                            textContent: truncate(firstMessage.message || '', 50)
+                        });
+                        
+                        const aiMessage = DOMHelper.createElement('div', {
+                            className: 'message-preview ai-message',
+                            textContent: truncate(lastMessage.response || '', 50)
+                        });
+                        
+                        conversationPreview.appendChild(userMessage);
+                        conversationPreview.appendChild(aiMessage);
+                        
+                        // メタ情報
+                        const conversationMeta = DOMHelper.createElement('div', {
+                            className: 'conversation-meta'
+                        });
+                        
+                        const messageCount = DOMHelper.createElement('span', {
+                            className: 'message-count',
+                            textContent: `💬 ${messages.length} メッセージ`
+                        });
+                        
+                        const actionButtons = DOMHelper.createElement('div', {
+                            className: 'action-buttons'
+                        });
+                        
+                        const shareBtn = DOMHelper.createElement('button', {
+                            className: 'icon-btn',
+                            textContent: '🔗',
+                            attributes: {
+                                'type': 'button',
+                                'aria-label': '会話を共有',
+                                'title': '会話を共有'
+                            },
+                            eventListeners: {
+                                'click': (e) => {
+                                    e.stopPropagation();
+                                    shareConversationDirect(convId);
+                                }
+                            }
+                        });
+                        
+                        actionButtons.appendChild(shareBtn);
+                        
+                        conversationMeta.appendChild(messageCount);
+                        conversationMeta.appendChild(actionButtons);
+                        
+                        // カードに要素を追加
+                        conversationCard.appendChild(conversationDate);
+                        conversationCard.appendChild(conversationPreview);
+                        conversationCard.appendChild(conversationMeta);
+                        
+                        fragment.appendChild(conversationCard);
+                        
+                    } catch (error) {
+                        console.error('Error creating conversation card:', error);
+                    }
+                });
+                
+                grid.textContent = '';
+                grid.appendChild(fragment);
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'displayConversations');
+                displayError();
+            }
+        }
+
+        // 文字列の切り詰め
+        function truncate(str, length) {
+            return str.length > length ? str.substring(0, length) + '...' : str;
+        }
+
+        // HTMLエスケープ（後方互換性のため）
+        function escapeHtml(text) {
+            return SecurityUtils.escapeHtml(text);
+        }
+
+        // 会話詳細の表示
+        async function showConversationDetail(conversationId) {
+            try {
+                // 入力値の検証
+                if (!conversationId || typeof conversationId !== 'string') {
+                    throw new Error('無効な会話IDです');
+                }
+                
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+
+                currentConversationId = conversationId;
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                const data = await response.json();
+
+                if (data.conversation && Array.isArray(data.conversation)) {
+                    displayConversationDetail(data.conversation);
+                    
+                    const modal = document.getElementById('conversation-modal');
+                    if (modal) {
+                        modal.style.display = 'block';
+                        modal.setAttribute('aria-hidden', 'false');
+                        
+                        // フォーカスをモーダル内に移動
+                        const closeBtn = modal.querySelector('.close-btn');
+                        if (closeBtn) {
+                            closeBtn.focus();
+                        }
+                    }
+                } else {
+                    throw new Error('会話データが見つかりません');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'showConversationDetail');
+                } else {
+                    ErrorHandler.handle(error, 'showConversationDetail');
+                }
+            }
+        }
+
+        // 会話詳細の表示
+        function displayConversationDetail(messages) {
+            const container = document.getElementById('modal-messages');
+            if (!container) return;
+            
+            try {
+                if (!Array.isArray(messages) || messages.length === 0) {
+                    container.textContent = 'メッセージがありません';
+                    return;
+                }
+                
+                const fragment = document.createDocumentFragment();
+                
+                messages.forEach(msg => {
+                    try {
+                        const time = new Date(msg.created_at);
+                        const timeStr = isNaN(time.getTime()) ? '不明' : time.toLocaleString('ja-JP');
+                        
+                        // ユーザーメッセージ
+                        const userMessage = DOMHelper.createElement('div', {
+                            className: 'modal-message modal-user-message',
+                            attributes: { 'role': 'log' }
+                        });
+                        
+                        const userHeader = DOMHelper.createElement('div', {
+                            textContent: `👤 You - ${timeStr}`,
+                            attributes: { 
+                                'style': 'font-size: 12px; color: #64748b; margin-bottom: 8px;'
+                            }
+                        });
+                        
+                        const userContent = DOMHelper.createElement('div', {
+                            textContent: msg.message || ''
+                        });
+                        
+                        userMessage.appendChild(userHeader);
+                        userMessage.appendChild(userContent);
+                        
+                        // AIメッセージ
+                        const aiMessage = DOMHelper.createElement('div', {
+                            className: 'modal-message modal-ai-message',
+                            attributes: { 'role': 'log' }
+                        });
+                        
+                        const aiHeader = DOMHelper.createElement('div', {
+                            textContent: `🤖 ベテランAI - ${timeStr}`,
+                            attributes: {
+                                'style': 'font-size: 12px; color: #64748b; margin-bottom: 8px;'
+                            }
+                        });
+                        
+                        const aiContent = DOMHelper.createElement('div', {
+                            textContent: msg.response || ''
+                        });
+                        
+                        aiMessage.appendChild(aiHeader);
+                        aiMessage.appendChild(aiContent);
+                        
+                        fragment.appendChild(userMessage);
+                        fragment.appendChild(aiMessage);
+                        
+                    } catch (error) {
+                        console.error('Error creating message element:', error);
+                    }
+                });
+                
+                container.textContent = '';
+                container.appendChild(fragment);
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'displayConversationDetail');
+                container.textContent = 'メッセージの読み込みに失敗しました';
+            }
+        }
+
+        // モーダルを閉じる
+        function closeModal() {
+            try {
+                const modal = document.getElementById('conversation-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                    
+                    // フォーカスを元の位置に戻す
+                    const conversationCard = document.querySelector(`[data-conversation-id="${currentConversationId}"]`);
+                    if (conversationCard) {
+                        conversationCard.focus();
+                    }
+                }
+                
+                currentConversationId = null;
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'closeModal');
+            }
+        }
+
+        // 会話の共有
+        async function shareConversation() {
+            if (!currentConversationId) return;
+            await shareConversationDirect(currentConversationId);
+        }
+
+        // 直接共有
+        async function shareConversationDirect(conversationId) {
+            try {
+                // 入力値の検証
+                if (!conversationId || typeof conversationId !== 'string') {
+                    throw new Error('無効な会話IDです');
+                }
+                
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                const response = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}/share`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        expires_hours: 24
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                const data = await response.json();
+
+                if (data.share_url) {
+                    try {
+                        await navigator.clipboard.writeText(data.share_url);
+                        ToastManager.showSuccess(`共有リンクをクリップボードにコピーしました！`);
+                    } catch (clipboardError) {
+                        // クリップボードアクセスに失敗した場合
+                        ToastManager.showInfo(`共有リンク: ${data.share_url}`);
+                    }
+                } else {
+                    throw new Error('共有リンクの作成に失敗しました');
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'shareConversationDirect');
+                } else {
+                    ErrorHandler.handle(error, 'shareConversationDirect');
+                }
+            }
+        }
+
+        // 検索
+        function searchConversations() {
+            try {
+                const input = document.getElementById('search-input');
+                if (!input) return;
+                
+                const rawQuery = input.value || '';
+                searchQuery = SecurityUtils.validateInput(rawQuery, 'text', 100);
+                displayConversations();
+                
+                // 検索結果のアナウンス
+                const grid = document.getElementById('conversations-grid');
+                if (grid) {
+                    const resultCount = grid.children.length;
+                    if (searchQuery) {
+                        ToastManager.showInfo(`「${searchQuery}」の検索結果: ${resultCount}件`);
+                    }
+                }
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'searchConversations');
+            }
+        }
+
+        // ページネーションの更新
+        function updatePagination() {
+            const container = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // 前へボタン
+            html += `<button class="page-btn" onclick="loadConversations(${currentPage - 1})" 
+                     ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
+            
+            // ページ番号
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                             onclick="loadConversations(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += `<span style="color: #94a3b8;">...</span>`;
+                }
+            }
+            
+            // 次へボタン
+            html += `<button class="page-btn" onclick="loadConversations(${currentPage + 1})" 
+                     ${currentPage === totalPages ? 'disabled' : ''}>→</button>`;
+            
+            container.innerHTML = html;
+        }
+
+        // エラー表示
+        function displayError() {
+            const grid = document.getElementById('conversations-grid');
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">❌</div>
+                    <div class="empty-text">エラーが発生しました</div>
+                    <div class="empty-subtext">ページを再読み込みしてください</div>
+                </div>
+            `;
+        }
+
+        // Enterキーで検索
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchConversations();
+            }
+        });
+
+        // モーダル外クリックで閉じる
+        document.getElementById('conversation-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'conversation-modal') {
+                closeModal();
+            }
+        });
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+                
+                // アクセシビリティの設定
+                setupAccessibility();
+                
+                // キーボードナビゲーションの設定
+                setupKeyboardNavigation();
+                
+                // データの読み込み
+                loadConversations();
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'initialization');
+            }
+        });
+        
+        // アクセシビリティの設定
+        function setupAccessibility() {
+            // グリッドにrole属性を追加
+            const grid = document.getElementById('conversations-grid');
+            if (grid) {
+                grid.setAttribute('role', 'list');
+                grid.setAttribute('aria-live', 'polite');
+                grid.setAttribute('aria-label', '会話履歴リスト');
+            }
+            
+            // 検索フィールドにrole属性を追加
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.setAttribute('role', 'searchbox');
+                searchInput.setAttribute('aria-label', '会話を検索');
+            }
+            
+            // モーダルにrole属性を追加
+            const modal = document.getElementById('conversation-modal');
+            if (modal) {
+                modal.setAttribute('role', 'dialog');
+                modal.setAttribute('aria-modal', 'true');
+                modal.setAttribute('aria-labelledby', 'modal-title');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+            
+            const modalTitle = document.querySelector('.modal-title');
+            if (modalTitle) {
+                modalTitle.id = 'modal-title';
+            }
+        }
+        
+        // キーボードナビゲーションの設定
+        function setupKeyboardNavigation() {
+            // Enterキーでの検索
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchConversations();
+                    }
+                });
+            }
+            
+            // Escapeキーでモーダルを閉じる
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const modal = document.getElementById('conversation-modal');
+                    if (modal && modal.style.display === 'block') {
+                        closeModal();
+                    }
+                }
+            });
+            
+            // モーダル内のフォーカストラップ
+            const modal = document.getElementById('conversation-modal');
+            if (modal) {
+                modal.addEventListener('keydown', (e) => {
+                    if (e.key === 'Tab') {
+                        const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                        const firstElement = focusableElements[0];
+                        const lastElement = focusableElements[focusableElements.length - 1];
+                        
+                        if (e.shiftKey && document.activeElement === firstElement) {
+                            e.preventDefault();
+                            lastElement.focus();
+                        } else if (!e.shiftKey && document.activeElement === lastElement) {
+                            e.preventDefault();
+                            firstElement.focus();
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
