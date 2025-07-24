@@ -757,7 +757,7 @@ def get_profile():
         logger.error(f"Profile error: {str(e)}")
         return jsonify({'error': 'Failed to get profile'}), 500
 
-@app.route('/api/auth/api-keys', methods=['POST'])
+@app.route('/api/api-keys', methods=['POST'])
 @require_auth(['write'])
 def create_api_key():
     """API Key生成"""
@@ -963,51 +963,7 @@ def get_api_keys():
         logger.error(f"Get API keys error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/api-keys', methods=['POST'])
-@require_auth(['write'])
-def create_api_key():
-    """Create new API key"""
-    try:
-        if not supabase:
-            return jsonify({'error': 'データベースが利用できません'}), 500
-        
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'リクエストデータが必要です'}), 400
-        
-        name = validate_input(data.get('name'), 100)
-        permissions = data.get('permissions', ['read'])
-        
-        if not name:
-            return jsonify({'error': '有効な名前が必要です'}), 400
-        
-        # APIキーを生成
-        api_key = f"sk-{secrets.token_urlsafe(32)}"
-        
-        api_key_data = {
-            'user_id': g.current_user_id,
-            'key': api_key,
-            'name': name,
-            'permissions': permissions,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat()
-        }
-        
-        result = supabase.table('api_keys').insert(api_key_data).execute()
-        
-        if result.data:
-            # 完全なキーを返す（作成時のみ）
-            return jsonify({
-                'success': True,
-                'api_key': result.data[0],
-                'message': 'APIキーを作成しました。このキーは二度と表示されません。'
-            })
-        else:
-            return jsonify({'error': 'APIキーの作成に失敗しました'}), 500
-        
-    except Exception as e:
-        logger.error(f"Create API key error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+# 重複削除（/api/auth/api-keysを使用）
 
 @app.route('/api/api-keys/<key_id>', methods=['PATCH'])
 @require_auth(['write'])
