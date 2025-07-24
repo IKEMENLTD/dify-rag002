@@ -1036,7 +1036,7 @@ def user_manual():
 def chat_page():
     """AIチャットページ"""
     try:
-        with open('chat.html', 'r', encoding='utf-8') as f:
+        with open('static/chat.html', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         return jsonify({'error': 'チャットページが見つかりません'}), 404
@@ -1048,7 +1048,7 @@ def chat_page():
 def reminders_page():
     """リマインダーページ"""
     try:
-        with open('reminders.html', 'r', encoding='utf-8') as f:
+        with open('static/reminders.html', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         return jsonify({'error': 'リマインダーページが見つかりません'}), 404
@@ -1060,7 +1060,7 @@ def reminders_page():
 def history_page():
     """会話履歴ページ"""
     try:
-        with open('history.html', 'r', encoding='utf-8') as f:
+        with open('static/history.html', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         return jsonify({'error': '履歴ページが見つかりません'}), 404
@@ -1072,7 +1072,7 @@ def history_page():
 def api_keys_page():
     """APIキー管理ページ"""
     try:
-        with open('api-keys.html', 'r', encoding='utf-8') as f:
+        with open('static/api-keys.html', 'r', encoding='utf-8') as f:
             return f.read()
     except FileNotFoundError:
         return jsonify({'error': 'APIキーページが見つかりません'}), 404
@@ -1085,7 +1085,7 @@ def api_keys_page():
 def common_utils():
     """共通JavaScriptライブラリ"""
     try:
-        with open('common-utils.js', 'r', encoding='utf-8') as f:
+        with open('static/common-utils.js', 'r', encoding='utf-8') as f:
             content = f.read()
             response = make_response(content)
             response.headers['Content-Type'] = 'application/javascript'
@@ -1100,7 +1100,7 @@ def common_utils():
 def styles_css():
     """共通スタイルシート"""
     try:
-        with open('styles.css', 'r', encoding='utf-8') as f:
+        with open('static/styles.css', 'r', encoding='utf-8') as f:
             content = f.read()
             response = make_response(content)
             response.headers['Content-Type'] = 'text/css'
@@ -1206,7 +1206,27 @@ def test_page():
     """
 
 @app.route('/chat')
-def chat():
+def chat_redirect():
+    """chat.htmlへリダイレクト"""
+    return chat_page()
+
+@app.route('/reminders')
+def reminders_redirect():
+    """reminders.htmlへリダイレクト"""
+    return reminders_page()
+
+@app.route('/history')
+def history_redirect():
+    """history.htmlへリダイレクト"""
+    return history_page()
+
+@app.route('/api-keys')
+def api_keys_redirect():
+    """api-keys.htmlへリダイレクト"""
+    return api_keys_page()
+
+@app.route('/chat_old')
+def chat_old():
     return """
     <!DOCTYPE html>
     <html>

@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⏰ リマインダー - ベテランAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 16px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
+        }
+
+        /* メインコンテナ */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 24px 24px;
+        }
+
+        /* 新規作成セクション */
+        .create-section {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* タブ */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* フォーム */
+        .reminder-form {
+            display: none;
+        }
+
+        .reminder-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .time-input {
+            width: 80px;
+            text-align: center;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 24px rgba(59, 130, 246, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* リマインダーリスト */
+        .reminders-section {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 32px;
+        }
+
+        .reminder-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .reminder-item {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .reminder-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.15),
+                0 4px 8px rgba(0, 0, 0, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .reminder-content {
+            flex: 1;
+        }
+
+        .reminder-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .reminder-info {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .reminder-type {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            background: #e0f2fe;
+            color: #0284c7;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .reminder-type.daily {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .delete-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+
+        .delete-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 64px;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 80px 16px 16px;
+            }
+
+            .create-section,
+            .reminders-section {
+                padding: 24px;
+            }
+
+            .reminder-item {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+
+            .delete-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <span>⏰</span>
+                <span>リマインダー</span>
+            </h1>
+            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+                ← 戻る
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 新規作成セクション -->
+        <div class="create-section">
+            <h2 class="section-title">
+                <span>📝</span>
+                <span>新しいリマインダー</span>
+            </h2>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('once')">1回のみ</button>
+                <button class="tab" onclick="switchTab('daily')">毎日</button>
+            </div>
+
+            <!-- 1回のみフォーム -->
+            <form class="reminder-form active" id="once-form">
+                <div class="form-group">
+                    <label class="form-label">内容</label>
+                    <input type="text" class="form-input" id="once-content" 
+                           placeholder="例: 会議の準備" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">日時</label>
+                    <input type="datetime-local" class="form-input" id="once-datetime" required>
+                </div>
+                <button type="submit" class="submit-btn">リマインダーを作成</button>
+            </form>
+
+            <!-- 毎日フォーム -->
+            <form class="reminder-form" id="daily-form">
+                <div class="form-group">
+                    <label class="form-label">内容</label>
+                    <input type="text" class="form-input" id="daily-content" 
+                           placeholder="例: 薬を飲む" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">時刻</label>
+                    <div class="time-inputs">
+                        <input type="number" class="form-input time-input" id="daily-hour" 
+                               min="0" max="23" placeholder="時" required>
+                        <span>:</span>
+                        <input type="number" class="form-input time-input" id="daily-minute" 
+                               min="0" max="59" placeholder="分" required>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">リマインダーを作成</button>
+            </form>
+        </div>
+
+        <!-- リマインダーリスト -->
+        <div class="reminders-section">
+            <h2 class="section-title">
+                <span>📋</span>
+                <span>アクティブなリマインダー</span>
+            </h2>
+
+            <div class="reminder-list" id="reminder-list">
+                <div class="empty-state">
+                    <div class="empty-icon">⏰</div>
+                    <div class="empty-text">リマインダーがありません</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- トースト通知 -->
+    <div id="toast-container" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 10000;
+    "></div>
+
+    <script>
+        // セキュリティユーティリティ
+        class SecurityUtils {
+            // HTMLエスケープ（XSS対策）
+            static escapeHtml(text) {
+                if (typeof text !== 'string') return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // 入力値の厳格な検証
+            static validateInput(value, type = 'text', maxLength = 1000) {
+                if (typeof value !== 'string') return '';
+                
+                // 基本的なサニタイズ
+                let sanitized = value.trim();
+                
+                // 長さチェック
+                if (sanitized.length > maxLength) {
+                    throw new Error(`入力値が長すぎます（最大${maxLength}文字）`);
+                }
+                
+                // XSSパターンの検出
+                const xssPatterns = [
+                    /<script[^>]*>.*?<\/script>/gi,
+                    /javascript:/gi,
+                    /on\w+\s*=/gi,
+                    /<iframe[^>]*>/gi,
+                    /<object[^>]*>/gi,
+                    /<embed[^>]*>/gi
+                ];
+                
+                for (const pattern of xssPatterns) {
+                    if (pattern.test(sanitized)) {
+                        throw new Error('不正な文字が含まれています');
+                    }
+                }
+                
+                return sanitized;
+            }
+
+            // 日時の検証
+            static validateDateTime(dateTimeString) {
+                const date = new Date(dateTimeString);
+                if (isNaN(date.getTime())) {
+                    throw new Error('無効な日時形式です');
+                }
+                
+                const now = new Date();
+                if (date < now) {
+                    throw new Error('過去の日時は設定できません');
+                }
+                
+                return dateTimeString;
+            }
+
+            // 時間の検証
+            static validateTime(hour, minute) {
+                const hourNum = parseInt(hour);
+                const minuteNum = parseInt(minute);
+                
+                if (isNaN(hourNum) || isNaN(minuteNum)) {
+                    throw new Error('無効な時間形式です');
+                }
+                
+                if (hourNum < 0 || hourNum > 23) {
+                    throw new Error('時間は0-23の範囲で入力してください');
+                }
+                
+                if (minuteNum < 0 || minuteNum > 59) {
+                    throw new Error('分は0-59の範囲で入力してください');
+                }
+                
+                return { hour: hourNum, minute: minuteNum };
+            }
+        }
+
+        // トークン管理クラス
+        class TokenManager {
+            static TOKEN_KEY = 'veteran_ai_token';
+            static TOKEN_EXPIRY_KEY = 'veteran_ai_token_expiry';
+            
+            static getToken() {
+                const token = localStorage.getItem(this.TOKEN_KEY);
+                const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+                
+                if (!token) return null;
+                
+                // トークンの有効期限チェック
+                if (expiry && new Date(expiry) < new Date()) {
+                    this.clearToken();
+                    return null;
+                }
+                
+                return token;
+            }
+            
+            static setToken(token, expiryHours = 24) {
+                const expiry = new Date();
+                expiry.setHours(expiry.getHours() + expiryHours);
+                
+                localStorage.setItem(this.TOKEN_KEY, token);
+                localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiry.toISOString());
+            }
+            
+            static clearToken() {
+                localStorage.removeItem(this.TOKEN_KEY);
+                localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+            }
+            
+            static isTokenValid() {
+                return this.getToken() !== null;
+            }
+        }
+
+        // エラーハンドリングクラス
+        class ErrorHandler {
+            static handle(error, context = '') {
+                console.error(`Error in ${context}:`, error);
+                
+                let message = 'エラーが発生しました';
+                
+                if (error.message) {
+                    message = error.message;
+                } else if (typeof error === 'string') {
+                    message = error;
+                }
+                
+                // セキュリティ上の理由で詳細なエラー情報を隠す
+                if (message.includes('fetch')) {
+                    message = '通信エラーが発生しました';
+                }
+                
+                ToastManager.showError(message);
+                return false;
+            }
+            
+            static async handleResponse(response) {
+                if (!response.ok) {
+                    let errorMessage = 'サーバーエラーが発生しました';
+                    
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    } catch (e) {
+                        // JSONパースエラーの場合はデフォルトメッセージを使用
+                    }
+                    
+                    if (response.status === 401) {
+                        TokenManager.clearToken();
+                        window.location.href = '/frontend_auth.html';
+                        return;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                return response;
+            }
+        }
+
+        // トースト通知システム
+        class ToastManager {
+            static showSuccess(message) {
+                this.show(message, 'success');
+            }
+            
+            static showError(message) {
+                this.show(message, 'error');
+            }
+            
+            static showInfo(message) {
+                this.show(message, 'info');
+            }
+            
+            static show(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'polite');
+                toast.style.cssText = `
+                    padding: 16px 24px;
+                    margin-bottom: 8px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                    font-weight: 500;
+                    font-size: 14px;
+                    max-width: 400px;
+                    opacity: 0;
+                    transform: translateX(100%);
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                `;
+                
+                // タイプごとの色設定
+                switch (type) {
+                    case 'success':
+                        toast.style.backgroundColor = '#dcfce7';
+                        toast.style.color = '#16a34a';
+                        toast.style.border = '1px solid #bbf7d0';
+                        break;
+                    case 'error':
+                        toast.style.backgroundColor = '#fee2e2';
+                        toast.style.color = '#dc2626';
+                        toast.style.border = '1px solid #fecaca';
+                        break;
+                    default:
+                        toast.style.backgroundColor = '#e0f2fe';
+                        toast.style.color = '#0369a1';
+                        toast.style.border = '1px solid #bae6fd';
+                }
+                
+                toast.textContent = message;
+                
+                // クリックで閉じる
+                toast.addEventListener('click', () => {
+                    this.remove(toast);
+                });
+                
+                container.appendChild(toast);
+                
+                // アニメーション
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateX(0)';
+                });
+                
+                // 自動で閉じる
+                setTimeout(() => {
+                    this.remove(toast);
+                }, type === 'error' ? 5000 : 3000);
+            }
+            
+            static remove(toast) {
+                if (!toast || !toast.parentNode) return;
+                
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // DOM操作ヘルパー
+        class DOMHelper {
+            // 安全な要素作成
+            static createElement(tag, options = {}) {
+                const element = document.createElement(tag);
+                
+                if (options.className) {
+                    element.className = options.className;
+                }
+                
+                if (options.textContent) {
+                    element.textContent = SecurityUtils.escapeHtml(options.textContent);
+                }
+                
+                if (options.attributes) {
+                    Object.entries(options.attributes).forEach(([key, value]) => {
+                        element.setAttribute(key, value);
+                    });
+                }
+                
+                if (options.eventListeners) {
+                    Object.entries(options.eventListeners).forEach(([event, handler]) => {
+                        element.addEventListener(event, handler);
+                    });
+                }
+                
+                return element;
+            }
+            
+            // 安全なHTML挿入
+            static setContent(element, content) {
+                element.textContent = '';
+                if (typeof content === 'string') {
+                    element.textContent = content;
+                } else if (content instanceof Node) {
+                    element.appendChild(content);
+                } else if (Array.isArray(content)) {
+                    content.forEach(item => {
+                        if (typeof item === 'string') {
+                            const textNode = document.createTextNode(item);
+                            element.appendChild(textNode);
+                        } else if (item instanceof Node) {
+                            element.appendChild(item);
+                        }
+                    });
+                }
+            }
+        }
+
+        // 現在のタブ
+        let currentTab = 'once';
+
+        // トークンの取得
+        function getAuthToken() {
+            return TokenManager.getToken();
+        }
+
+        // タブ切り替え
+        function switchTab(tab) {
+            try {
+                if (!['once', 'daily'].includes(tab)) {
+                    throw new Error('無効なタブです');
+                }
+                
+                currentTab = tab;
+                
+                // タブのアクティブ状態を更新
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
+                
+                const activeTab = event.target;
+                activeTab.classList.add('active');
+                activeTab.setAttribute('aria-selected', 'true');
+                
+                // フォームの表示を切り替え
+                document.querySelectorAll('.reminder-form').forEach(f => {
+                    f.classList.remove('active');
+                    f.setAttribute('aria-hidden', 'true');
+                });
+                
+                const activeForm = document.getElementById(`${tab}-form`);
+                if (activeForm) {
+                    activeForm.classList.add('active');
+                    activeForm.setAttribute('aria-hidden', 'false');
+                }
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'switchTab');
+            }
+        }
+
+        // リマインダーの取得と表示
+        async function loadReminders() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = '/frontend_auth.html';
+                return;
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒タイムアウト
+
+            try {
+                const response = await fetch('/api/reminders', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                const data = await response.json();
+
+                if (data.reminders && Array.isArray(data.reminders)) {
+                    displayReminders(data.reminders);
+                } else {
+                    displayReminders([]);
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'loadReminders');
+                } else {
+                    ErrorHandler.handle(error, 'loadReminders');
+                }
+                displayReminders([]);
+            }
+        }
+
+        // リマインダーの表示
+        function displayReminders(reminders) {
+            const listContainer = document.getElementById('reminder-list');
+            
+            if (!Array.isArray(reminders) || reminders.length === 0) {
+                const emptyState = DOMHelper.createElement('div', {
+                    className: 'empty-state',
+                    attributes: { 'role': 'status', 'aria-live': 'polite' }
+                });
+                
+                const emptyIcon = DOMHelper.createElement('div', {
+                    className: 'empty-icon',
+                    textContent: '⏰'
+                });
+                
+                const emptyText = DOMHelper.createElement('div', {
+                    className: 'empty-text',
+                    textContent: 'リマインダーがありません'
+                });
+                
+                emptyState.appendChild(emptyIcon);
+                emptyState.appendChild(emptyText);
+                
+                listContainer.textContent = '';
+                listContainer.appendChild(emptyState);
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            
+            reminders.forEach(reminder => {
+                try {
+                    const isDaily = reminder.reminder_type === 'daily';
+                    let timeInfo;
+                    
+                    if (isDaily) {
+                        const hour = String(reminder.hour || 0).padStart(2, '0');
+                        const minute = String(reminder.minute || 0).padStart(2, '0');
+                        timeInfo = `毎日 ${hour}:${minute}`;
+                    } else {
+                        const date = new Date(reminder.scheduled_time);
+                        timeInfo = isNaN(date.getTime()) ? '不明' : date.toLocaleString('ja-JP');
+                    }
+                    
+                    // リマインダーアイテムを作成
+                    const reminderItem = DOMHelper.createElement('div', {
+                        className: 'reminder-item',
+                        attributes: { 'role': 'listitem' }
+                    });
+                    
+                    // コンテンツ部分
+                    const reminderContent = DOMHelper.createElement('div', {
+                        className: 'reminder-content'
+                    });
+                    
+                    const reminderText = DOMHelper.createElement('div', {
+                        className: 'reminder-text',
+                        textContent: reminder.content || ''
+                    });
+                    
+                    const reminderInfo = DOMHelper.createElement('div', {
+                        className: 'reminder-info'
+                    });
+                    
+                    const reminderType = DOMHelper.createElement('span', {
+                        className: `reminder-type ${isDaily ? 'daily' : 'once'}`,
+                        textContent: isDaily ? '🔄 毎日' : '📅 1回のみ'
+                    });
+                    
+                    const timeSpan = DOMHelper.createElement('span', {
+                        textContent: '⏰ ' + timeInfo
+                    });
+                    
+                    reminderInfo.appendChild(reminderType);
+                    reminderInfo.appendChild(timeSpan);
+                    
+                    reminderContent.appendChild(reminderText);
+                    reminderContent.appendChild(reminderInfo);
+                    
+                    // 削除ボタン
+                    const deleteBtn = DOMHelper.createElement('button', {
+                        className: 'delete-btn',
+                        textContent: '削除',
+                        attributes: {
+                            'type': 'button',
+                            'aria-label': `リマインダー「${reminder.content}」を削除`,
+                            'data-reminder-id': reminder.id
+                        },
+                        eventListeners: {
+                            'click': () => deleteReminder(reminder.id)
+                        }
+                    });
+                    
+                    reminderItem.appendChild(reminderContent);
+                    reminderItem.appendChild(deleteBtn);
+                    fragment.appendChild(reminderItem);
+                    
+                } catch (error) {
+                    console.error('Error creating reminder item:', error);
+                }
+            });
+            
+            listContainer.textContent = '';
+            listContainer.appendChild(fragment);
+        }
+
+        // HTMLエスケープ（後方互換性のため）
+        function escapeHtml(text) {
+            return SecurityUtils.escapeHtml(text);
+        }
+
+        // リマインダーの作成（1回のみ）
+        document.getElementById('once-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+
+                // 入力値の取得と検証
+                const contentInput = document.getElementById('once-content');
+                const datetimeInput = document.getElementById('once-datetime');
+                
+                const content = SecurityUtils.validateInput(
+                    contentInput.value, 
+                    'text', 
+                    500
+                );
+                
+                const datetime = SecurityUtils.validateDateTime(
+                    datetimeInput.value
+                );
+                
+                if (!content.trim()) {
+                    throw new Error('リマインダーの内容を入力してください');
+                }
+                
+                // ボタンを無効化
+                submitBtn.disabled = true;
+                submitBtn.textContent = '作成中...';
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch('/api/reminders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        type: 'once',
+                        content: content,
+                        datetime: datetime.replace('T', ' ') + ':00'
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                
+                ToastManager.showSuccess('リマインダーを作成しました！');
+                e.target.reset();
+                setDefaultDateTime(); // デフォルト時刻を再設定
+                await loadReminders();
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'createOnceReminder');
+                } else {
+                    ErrorHandler.handle(error, 'createOnceReminder');
+                }
+            } finally {
+                // ボタンを有効化
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // リマインダーの作成（毎日）
+        document.getElementById('daily-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = e.target.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+
+                // 入力値の取得と検証
+                const contentInput = document.getElementById('daily-content');
+                const hourInput = document.getElementById('daily-hour');
+                const minuteInput = document.getElementById('daily-minute');
+                
+                const content = SecurityUtils.validateInput(
+                    contentInput.value, 
+                    'text', 
+                    500
+                );
+                
+                if (!content.trim()) {
+                    throw new Error('リマインダーの内容を入力してください');
+                }
+                
+                const timeValidation = SecurityUtils.validateTime(
+                    hourInput.value,
+                    minuteInput.value
+                );
+                
+                // ボタンを無効化
+                submitBtn.disabled = true;
+                submitBtn.textContent = '作成中...';
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch('/api/reminders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        type: 'daily',
+                        content: content,
+                        hour: timeValidation.hour,
+                        minute: timeValidation.minute
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                
+                ToastManager.showSuccess('リマインダーを作成しました！');
+                e.target.reset();
+                await loadReminders();
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'createDailyReminder');
+                } else {
+                    ErrorHandler.handle(error, 'createDailyReminder');
+                }
+            } finally {
+                // ボタンを有効化
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // リマインダーの削除
+        async function deleteReminder(id) {
+            try {
+                // 入力値の検証
+                if (!id || typeof id !== 'string') {
+                    throw new Error('無効なリマインダーIDです');
+                }
+                
+                if (!confirm('このリマインダーを削除しますか？')) {
+                    return;
+                }
+
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+                
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(`/api/reminders/${encodeURIComponent(id)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                await ErrorHandler.handleResponse(response);
+                
+                ToastManager.showSuccess('リマインダーを削除しました');
+                await loadReminders();
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.handle('通信がタイムアウトしました', 'deleteReminder');
+                } else {
+                    ErrorHandler.handle(error, 'deleteReminder');
+                }
+            }
+        }
+
+        // 現在時刻を日時入力欄のデフォルト値に設定
+        function setDefaultDateTime() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 30); // 30分後
+            const datetime = now.toISOString().slice(0, 16);
+            document.getElementById('once-datetime').value = datetime;
+        }
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/frontend_auth.html';
+                    return;
+                }
+                
+                // アクセシビリティの設定
+                setupAccessibility();
+                
+                // デフォルト値の設定
+                setDefaultDateTime();
+                
+                // データの読み込み
+                loadReminders();
+                
+                // キーボードナビゲーションの設定
+                setupKeyboardNavigation();
+                
+            } catch (error) {
+                ErrorHandler.handle(error, 'initialization');
+            }
+        });
+        
+        // アクセシビリティの設定
+        function setupAccessibility() {
+            // タブにrole属性を追加
+            document.querySelectorAll('.tab').forEach((tab, index) => {
+                tab.setAttribute('role', 'tab');
+                tab.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+                tab.setAttribute('tabindex', index === 0 ? '0' : '-1');
+            });
+            
+            // フォームにaria属性を追加
+            document.querySelectorAll('.reminder-form').forEach((form, index) => {
+                form.setAttribute('role', 'tabpanel');
+                form.setAttribute('aria-hidden', index === 0 ? 'false' : 'true');
+            });
+            
+            // リストにrole属性を追加
+            const reminderList = document.getElementById('reminder-list');
+            if (reminderList) {
+                reminderList.setAttribute('role', 'list');
+                reminderList.setAttribute('aria-live', 'polite');
+            }
+        }
+        
+        // キーボードナビゲーションの設定
+        function setupKeyboardNavigation() {
+            // タブのキーボードナビゲーション
+            document.addEventListener('keydown', (e) => {
+                if (e.target.classList.contains('tab') && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                    e.preventDefault();
+                    
+                    const tabs = Array.from(document.querySelectorAll('.tab'));
+                    const currentIndex = tabs.indexOf(e.target);
+                    let nextIndex;
+                    
+                    if (e.key === 'ArrowLeft') {
+                        nextIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+                    } else {
+                        nextIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+                    }
+                    
+                    tabs[nextIndex].focus();
+                    tabs[nextIndex].click();
+                }
+            });
+            
+            // Enterキーでのフォーム送信
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.classList.contains('form-input')) {
+                    const form = e.target.closest('form');
+                    if (form && form.classList.contains('active')) {
+                        e.preventDefault();
+                        form.requestSubmit();
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

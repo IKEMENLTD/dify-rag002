@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔑 API Key管理 - ベテランAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 16px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
+        }
+
+        /* メインコンテナ */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 24px 24px;
+        }
+
+        /* 説明セクション */
+        .info-section {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .info-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #3730a3;
+            line-height: 1.6;
+        }
+
+        /* 新規作成セクション */
+        .create-section {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 権限チェックボックス */
+        .permissions-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .permission-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+
+        .permission-label {
+            font-size: 14px;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 24px rgba(59, 130, 246, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* APIキーリスト */
+        .keys-section {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 32px;
+        }
+
+        .key-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .key-item {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .key-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.15),
+                0 4px 8px rgba(0, 0, 0, 0.05);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .key-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .key-status {
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .key-status.active {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .key-status.inactive {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .key-value {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 14px;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 12px;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .key-hidden {
+            filter: blur(5px);
+            user-select: none;
+        }
+
+        .visibility-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .visibility-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+        }
+
+        .key-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .key-permissions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .permission-badge {
+            padding: 4px 8px;
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .key-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .action-btn.delete {
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .action-btn.delete:hover {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 64px;
+            color: #94a3b8;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .empty-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 80px 16px 16px;
+            }
+
+            .create-section,
+            .keys-section {
+                padding: 24px;
+            }
+
+            .permissions-group {
+                grid-template-columns: 1fr;
+            }
+
+            .key-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <span>🔑</span>
+                <span>API Key管理</span>
+            </h1>
+            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'" type="button" aria-label="メインメニューに戻る">
+                ← 戻る
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- 説明セクション -->
+        <div class="info-section">
+            <div class="info-icon">ℹ️</div>
+            <div class="info-content">
+                <div class="info-title">API Keyについて</div>
+                <div class="info-text">
+                    API Keyは、プログラムからベテランAIを利用するための認証キーです。
+                    外部アプリケーションやスクリプトからアクセスする際に使用します。
+                    キーは安全に保管し、他人と共有しないでください。
+                </div>
+            </div>
+        </div>
+
+        <!-- 新規作成セクション -->
+        <div class="create-section">
+            <h2 class="section-title">
+                <span>➕</span>
+                <span>新しいAPI Keyを作成</span>
+            </h2>
+
+            <form id="create-key-form">
+                <div class="form-group">
+                    <label class="form-label">キーの名前</label>
+                    <input type="text" class="form-input" id="key-name" 
+                           placeholder="例: 開発用キー" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">権限</label>
+                    <div class="permissions-group">
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm-read" class="permission-checkbox" checked>
+                            <label for="perm-read" class="permission-label">読み取り</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm-write" class="permission-checkbox" checked>
+                            <label for="perm-write" class="permission-label">書き込み</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm-delete" class="permission-checkbox">
+                            <label for="perm-delete" class="permission-label">削除</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="perm-admin" class="permission-checkbox">
+                            <label for="perm-admin" class="permission-label">管理者</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">API Keyを作成</button>
+            </form>
+        </div>
+
+        <!-- APIキーリスト -->
+        <div class="keys-section">
+            <h2 class="section-title">
+                <span>📋</span>
+                <span>あなたのAPI Key</span>
+            </h2>
+
+            <div class="key-list" id="key-list">
+                <div class="empty-state">
+                    <div class="empty-icon">🔑</div>
+                    <div class="empty-text">API Keyがありません</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // キーの表示状態
+        const keyVisibility = {};
+
+        // トークンの取得
+        function getAuthToken() {
+            return localStorage.getItem('veteran_ai_token');
+        }
+
+        // ユーザー情報の取得
+        function getUserInfo() {
+            const userStr = localStorage.getItem('veteran_ai_user');
+            return userStr ? JSON.parse(userStr) : null;
+        }
+
+        // API Keyの取得と表示
+        async function loadApiKeys() {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = '/frontend_auth.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/api-keys', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayApiKeys(data.api_keys);
+                } else {
+                    throw new Error(data.error || 'API Keyの取得に失敗しました');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                // モックデータで表示（開発用）
+                displayApiKeys([]);
+            }
+        }
+
+        // API Keyの表示
+        function displayApiKeys(keys) {
+            const container = document.getElementById('key-list');
+            
+            if (keys.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔑</div>
+                        <div class="empty-text">API Keyがありません</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = keys.map((key, index) => {
+                const isVisible = keyVisibility[key.id] || false;
+                const createdAt = new Date(key.created_at).toLocaleDateString('ja-JP');
+                
+                return `
+                    <div class="key-item">
+                        <div class="key-header">
+                            <div class="key-name">${escapeHtml(key.name)}</div>
+                            <span class="key-status ${key.is_active ? 'active' : 'inactive'}">
+                                ${key.is_active ? '✓ 有効' : '✗ 無効'}
+                            </span>
+                        </div>
+                        
+                        <div class="key-value">
+                            <span class="${isVisible ? '' : 'key-hidden'}" style="flex: 1;">
+                                ${isVisible ? key.key : 'sk-••••••••••••••••••••••••••••••••'}
+                            </span>
+                            <button class="visibility-btn" onclick="toggleKeyVisibility('${key.id}')">
+                                ${isVisible ? '🙈 隠す' : '👁️ 表示'}
+                            </button>
+                            <button class="visibility-btn" onclick="copyKey('${key.key}')">
+                                📋 コピー
+                            </button>
+                        </div>
+                        
+                        <div class="key-meta">
+                            <span>📅 作成日: ${createdAt}</span>
+                            ${key.last_used_at ? `<span>🕐 最終使用: ${new Date(key.last_used_at).toLocaleDateString('ja-JP')}</span>` : ''}
+                        </div>
+                        
+                        <div class="key-permissions">
+                            ${key.permissions.map(perm => `
+                                <span class="permission-badge">${getPermissionLabel(perm)}</span>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="key-actions">
+                            <button class="action-btn" onclick="toggleKeyStatus('${key.id}', ${key.is_active})">
+                                ${key.is_active ? '無効化' : '有効化'}
+                            </button>
+                            <button class="action-btn delete" onclick="deleteKey('${key.id}')">
+                                削除
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 権限ラベルの取得
+        function getPermissionLabel(permission) {
+            const labels = {
+                'read': '読み取り',
+                'write': '書き込み',
+                'delete': '削除',
+                'admin': '管理者'
+            };
+            return labels[permission] || permission;
+        }
+
+        // HTMLエスケープ
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // キーの表示/非表示切り替え
+        function toggleKeyVisibility(keyId) {
+            keyVisibility[keyId] = !keyVisibility[keyId];
+            loadApiKeys();
+        }
+
+        // キーのコピー
+        async function copyKey(key) {
+            try {
+                await navigator.clipboard.writeText(key);
+                alert('API Keyをクリップボードにコピーしました！');
+            } catch (error) {
+                alert('コピーに失敗しました');
+            }
+        }
+
+        // キーの有効/無効切り替え
+        async function toggleKeyStatus(keyId, currentStatus) {
+            const token = getAuthToken();
+            if (!token) return;
+
+            if (!confirm(`このAPI Keyを${currentStatus ? '無効化' : '有効化'}しますか？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/api-keys/${keyId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        is_active: !currentStatus
+                    })
+                });
+
+                if (response.ok) {
+                    loadApiKeys();
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || '更新に失敗しました');
+                }
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+
+        // キーの削除
+        async function deleteKey(keyId) {
+            const token = getAuthToken();
+            if (!token) return;
+
+            if (!confirm('このAPI Keyを削除しますか？この操作は取り消せません。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/api-keys/${keyId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    loadApiKeys();
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || '削除に失敗しました');
+                }
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+
+        // 新規API Key作成
+        document.getElementById('create-key-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = getAuthToken();
+            if (!token) return;
+
+            const name = document.getElementById('key-name').value;
+            const permissions = [];
+            
+            if (document.getElementById('perm-read').checked) permissions.push('read');
+            if (document.getElementById('perm-write').checked) permissions.push('write');
+            if (document.getElementById('perm-delete').checked) permissions.push('delete');
+            if (document.getElementById('perm-admin').checked) permissions.push('admin');
+
+            if (permissions.length === 0) {
+                alert('少なくとも1つの権限を選択してください');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/keys/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        permissions: permissions
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 新しく作成されたキーを表示
+                    keyVisibility[data.api_key.id] = true;
+                    
+                    alert(`API Keyを作成しました！\n\n${data.api_key.key}\n\nこのキーは二度と表示されません。安全な場所にコピーしてください。`);
+                    
+                    // キーをクリップボードにコピー
+                    await navigator.clipboard.writeText(data.api_key.key);
+                    
+                    e.target.reset();
+                    loadApiKeys();
+                } else {
+                    throw new Error(data.error || 'API Keyの作成に失敗しました');
+                }
+            } catch (error) {
+                // デモ用のモック
+                const mockKey = `sk-${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+                alert(`API Keyを作成しました！（デモ）\n\n${mockKey}\n\nこのキーは二度と表示されません。安全な場所にコピーしてください。`);
+                e.target.reset();
+            }
+        });
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getUserInfo();
+            if (!user) {
+                window.location.href = '/frontend_auth.html';
+                return;
+            }
+            
+            // 管理者権限チェック（オプション）
+            if (user.role !== 'admin' && !user.permissions?.includes('admin')) {
+                document.getElementById('perm-admin').disabled = true;
+                document.getElementById('perm-admin').nextElementSibling.style.opacity = '0.5';
+                document.getElementById('perm-admin').nextElementSibling.title = '管理者権限が必要です';
+            }
+            
+            loadApiKeys();
+        });
+    </script>
+</body>
+</html>

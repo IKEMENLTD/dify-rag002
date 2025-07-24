@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 AIチャット - ベテランAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 16px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.2);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(100, 116, 139, 0.3);
+        }
+
+        /* チャットコンテナ */
+        .chat-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 100px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* メッセージエリア */
+        .messages-area {
+            flex: 1;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.05),
+                0 8px 16px rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            padding: 24px;
+            overflow-y: auto;
+            margin-bottom: 24px;
+        }
+
+        /* メッセージ */
+        .message {
+            margin-bottom: 20px;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message-ai {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .message-user .message-bubble {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-ai .message-bubble {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .message-ai .message-time {
+            text-align: left;
+        }
+
+        /* 入力エリア */
+        .input-area {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.08),
+                0 8px 16px rgba(59, 130, 246, 0.1),
+                inset 0 -1px 0 rgba(59, 130, 246, 0.1);
+            padding: 20px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+        }
+
+        .input-form {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 16px;
+            resize: none;
+            min-height: 56px;
+            max-height: 150px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 
+                0 0 0 4px rgba(59, 130, 246, 0.1),
+                0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .send-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 
+                0 8px 16px rgba(59, 130, 246, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 24px rgba(59, 130, 246, 0.4),
+                0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        .send-btn:disabled {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* タイピングインジケーター */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 20px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            max-width: 100px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        /* 共有ボタン */
+        .share-btn {
+            font-size: 12px;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        /* ウェルカムメッセージ */
+        .welcome-message {
+            text-align: center;
+            padding: 48px;
+            color: #64748b;
+        }
+
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .welcome-desc {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* トースト通知のスタイル */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1001;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 400px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .toast-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast-success {
+            border-left: 4px solid #10b981;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #64748b;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .chat-container {
+                padding: 80px 16px 16px;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .send-btn {
+                padding: 16px 24px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .toast {
+                right: 16px;
+                left: 16px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1 class="header-title">
+                <span>💬</span>
+                <span>AIチャット</span>
+            </h1>
+            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+                ← 戻る
+            </button>
+        </div>
+    </header>
+
+    <div class="chat-container">
+        <div class="messages-area" id="messages-area">
+            <div class="welcome-message" id="welcome-message">
+                <div class="welcome-icon">🤖</div>
+                <div class="welcome-title">ベテランAI Ver.003へようこそ</div>
+                <div class="welcome-desc">
+                    何でもお気軽にご質問ください。<br>
+                    AIアシスタントがお答えします。
+                </div>
+            </div>
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <form class="input-form" id="chat-form">
+                <textarea 
+                    class="message-input" 
+                    id="message-input" 
+                    placeholder="メッセージを入力..."
+                    rows="1"
+                    required
+                ></textarea>
+                <button type="submit" class="send-btn" id="send-btn">
+                    <span>送信</span>
+                    <span>→</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 要素の取得
+        const messagesArea = document.getElementById('messages-area');
+        const messageInput = document.getElementById('message-input');
+        const chatForm = document.getElementById('chat-form');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const welcomeMessage = document.getElementById('welcome-message');
+
+        // 現在の会話ID
+        let currentConversationId = null;
+
+        // 改善されたトークン管理システム
+        const TokenManager = {
+            TOKEN_KEY: 'veteran_ai_token',
+            
+            setToken(token, expiresIn = 3600) {
+                try {
+                    const expiry = Date.now() + (expiresIn * 1000);
+                    const tokenData = {
+                        token: token,
+                        expiry: expiry,
+                        created: Date.now()
+                    };
+                    
+                    // sessionStorageを使用してセキュリティを向上
+                    sessionStorage.setItem(this.TOKEN_KEY, JSON.stringify(tokenData));
+                    
+                    // 自動削除タイマーを設定
+                    this.scheduleTokenCleanup(expiresIn * 1000);
+                } catch (error) {
+                    console.error('Failed to store token:', error);
+                }
+            },
+            
+            getToken() {
+                try {
+                    const stored = sessionStorage.getItem(this.TOKEN_KEY) || localStorage.getItem(this.TOKEN_KEY);
+                    if (!stored) return null;
+                    
+                    const tokenData = JSON.parse(stored);
+                    
+                    // 有効期限チェック
+                    if (Date.now() > tokenData.expiry) {
+                        this.clearToken();
+                        return null;
+                    }
+                    
+                    // JWTの形式チェック
+                    if (!this.isValidJWT(tokenData.token)) {
+                        this.clearToken();
+                        return null;
+                    }
+                    
+                    return tokenData.token;
+                } catch (error) {
+                    console.error('Failed to retrieve token:', error);
+                    this.clearToken();
+                    return null;
+                }
+            },
+            
+            clearToken() {
+                sessionStorage.removeItem(this.TOKEN_KEY);
+                localStorage.removeItem(this.TOKEN_KEY); // 旧データのクリーンアップ
+            },
+            
+            isValidJWT(token) {
+                if (!token || typeof token !== 'string') return false;
+                
+                const parts = token.split('.');
+                if (parts.length !== 3) return false;
+                
+                try {
+                    // JWT payload のデコードと検証
+                    const payload = JSON.parse(atob(parts[1]));
+                    
+                    // 必須フィールドの確認
+                    if (!payload.exp || !payload.iat) return false;
+                    
+                    // 有効期限チェック
+                    return payload.exp * 1000 > Date.now();
+                } catch (error) {
+                    return false;
+                }
+            },
+            
+            scheduleTokenCleanup(delay) {
+                setTimeout(() => {
+                    const token = this.getToken();
+                    if (!token) {
+                        ErrorHandler.show('セッションが期限切れです。再ログインしてください。');
+                        setTimeout(() => {
+                            window.location.href = '/frontend_auth.html';
+                        }, 2000);
+                    }
+                }, delay);
+            },
+            
+            // トークンの残り時間を取得
+            getTimeToExpiry() {
+                try {
+                    const stored = sessionStorage.getItem(this.TOKEN_KEY) || localStorage.getItem(this.TOKEN_KEY);
+                    if (!stored) return 0;
+                    
+                    const tokenData = JSON.parse(stored);
+                    return Math.max(0, tokenData.expiry - Date.now());
+                } catch {
+                    return 0;
+                }
+            }
+        };
+        
+        // 後方互換性のための関数
+        function getAuthToken() {
+            return TokenManager.getToken();
+        }
+
+        // セキュアなメッセージ追加
+        function addMessage(content, isUser, timestamp, conversationId = null) {
+            // ウェルカムメッセージを非表示
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'none';
+            }
+
+            // 入力値の厳格な検証
+            if (!content || typeof content !== 'string') {
+                console.error('Invalid message content');
+                return;
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'message-user' : 'message-ai'}`;
+            messageDiv.setAttribute('role', 'article');
+            messageDiv.setAttribute('aria-label', isUser ? 'ユーザーのメッセージ' : 'AIの返答');
+            
+            const time = new Date(timestamp || Date.now()).toLocaleTimeString('ja-JP', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // DOM安全な要素作成
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            
+            const messageBubble = document.createElement('div');
+            messageBubble.className = 'message-bubble';
+            messageBubble.textContent = content; // XSS防止
+            
+            const messageTime = document.createElement('div');
+            messageTime.className = 'message-time';
+            messageTime.textContent = time;
+            
+            messageContent.appendChild(messageBubble);
+            messageContent.appendChild(messageTime);
+            
+            // 共有ボタン（安全な追加）
+            if (!isUser && (conversationId || currentConversationId)) {
+                const shareBtn = document.createElement('button');
+                shareBtn.className = 'share-btn';
+                shareBtn.textContent = '共有';
+                shareBtn.setAttribute('aria-label', '会話を共有');
+                shareBtn.setAttribute('tabindex', '0');
+                shareBtn.addEventListener('click', () => {
+                    shareConversation(conversationId || currentConversationId);
+                });
+                messageContent.appendChild(shareBtn);
+            }
+            
+            messageDiv.appendChild(messageContent);
+            messagesArea.insertBefore(messageDiv, typingIndicator);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        // 改善されたセキュリティ関数
+        const SecurityUtils = {
+            // より厳格な入力検証
+            validateInput(input, maxLength = 1000) {
+                if (!input || typeof input !== 'string') {
+                    throw new Error('無効な入力です');
+                }
+                
+                if (input.length > maxLength) {
+                    throw new Error(`入力は${maxLength}文字以内にしてください`);
+                }
+                
+                // 危険なパターンをチェック
+                const dangerousPatterns = [
+                    /<script[^>]*>.*?<\/script>/gi,
+                    /javascript:/gi,
+                    /on\w+\s*=/gi,
+                    /<iframe[^>]*>.*?<\/iframe>/gi
+                ];
+                
+                for (const pattern of dangerousPatterns) {
+                    if (pattern.test(input)) {
+                        throw new Error('不正な内容が含まれています');
+                    }
+                }
+                
+                return input.trim();
+            },
+            
+            // HTMLエスケープ（後方互換性のため残す）
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+        
+        // 後方互換性のためのエイリアス
+        function escapeHtml(text) {
+            return SecurityUtils.escapeHtml(text);
+        }
+
+        // 改善されたエラーハンドリングシステム
+        const ErrorHandler = {
+            show(message, type = 'error') {
+                this.hideAll();
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = `toast toast-${type}`;
+                errorDiv.setAttribute('role', 'alert');
+                errorDiv.setAttribute('aria-live', 'assertive');
+                
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = message;
+                errorDiv.appendChild(messageSpan);
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '×';
+                closeBtn.className = 'toast-close';
+                closeBtn.setAttribute('aria-label', '通知を閉じる');
+                closeBtn.addEventListener('click', () => errorDiv.remove());
+                errorDiv.appendChild(closeBtn);
+                
+                document.body.appendChild(errorDiv);
+                
+                // 自動で削除
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.remove();
+                    }
+                }, 5000);
+            },
+            
+            hideAll() {
+                document.querySelectorAll('.toast').forEach(toast => toast.remove());
+            }
+        };
+
+        // 改善されたメッセージ送信
+        async function sendMessage(e) {
+            e.preventDefault();
+
+            try {
+                const message = SecurityUtils.validateInput(messageInput.value);
+                if (!message) {
+                    ErrorHandler.show('メッセージを入力してください', 'warning');
+                    return;
+                }
+
+                const token = getAuthToken();
+                if (!token) {
+                    ErrorHandler.show('ログインの有効期限が切れました');
+                    setTimeout(() => {
+                        window.location.href = '/frontend_auth.html';
+                    }, 2000);
+                    return;
+                }
+
+                // ユーザーメッセージを追加
+                addMessage(message, true);
+                
+                // 入力をクリア
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                
+                // ボタンを無効化
+                sendBtn.disabled = true;
+                sendBtn.textContent = '送信中...';
+                
+                // タイピングインジケーターを表示
+                typingIndicator.style.display = 'flex';
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        conversation_id: currentConversationId
+                    }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 会話IDを保存
+                    if (data.conversation_id) {
+                        currentConversationId = data.conversation_id;
+                    }
+                    
+                    // AIの応答を追加
+                    addMessage(data.response, false, data.timestamp, data.conversation_id);
+                } else {
+                    const errorMsg = this.getErrorMessage(response.status, data.error);
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    ErrorHandler.show('リクエストがタイムアウトしました。再試行してください。');
+                } else {
+                    ErrorHandler.show(error.message || '予期しないエラーが発生しました');
+                }
+                console.error('Chat error:', error);
+            } finally {
+                // タイピングインジケーターを非表示
+                typingIndicator.style.display = 'none';
+                
+                // ボタンを有効化
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<span>送信</span><span>→</span>';
+                
+                // 入力欄にフォーカス
+                messageInput.focus();
+            }
+        }
+        
+        // エラーメッセージのマッピング
+        function getErrorMessage(status, errorMsg) {
+            const errorMessages = {
+                400: '入力内容に問題があります。確認してください。',
+                401: 'ログインが必要です。',
+                403: 'アクセス権限がありません。',
+                429: 'リクエストが多すぎます。しばらく待ってから再試行してください。',
+                500: 'サーバーエラーが発生しました。',
+                503: 'サービスが一時的に利用できません。'
+            };
+            
+            return errorMessages[status] || errorMsg || '不明なエラーが発生しました';
+        }
+
+        // 会話の共有
+        async function shareConversation(conversationId) {
+            const token = getAuthToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`/api/conversations/${conversationId}/share`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        expires_hours: 24
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 共有URLをクリップボードにコピー
+                    await navigator.clipboard.writeText(data.share_url);
+                    alert('共有リンクをクリップボードにコピーしました！\n\n' + data.share_url);
+                } else {
+                    throw new Error(data.error || '共有リンクの作成に失敗しました');
+                }
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+
+        // テキストエリアの自動リサイズ
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        // Enterキーで送信（Shift+Enterで改行）
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // フォームの送信イベント
+        chatForm.addEventListener('submit', sendMessage);
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getAuthToken();
+            if (!token) {
+                window.location.href = '/frontend_auth.html';
+            }
+            messageInput.focus();
+        });
+    </script>
+</body>
+</html>
