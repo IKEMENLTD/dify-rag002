@@ -963,7 +963,7 @@ def get_api_keys():
         logger.error(f"Get API keys error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# 重複削除（/api/auth/api-keysを使用）
+# API Keys routes - 重複を削除済み
 
 @app.route('/api/api-keys/<key_id>', methods=['PATCH'])
 @require_auth(['write'])
@@ -1830,3 +1830,5 @@ def create_admin_temporary():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
+# Cache clear: 2025-01-24
