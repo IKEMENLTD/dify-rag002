@@ -438,7 +438,7 @@
                 <span>📚</span>
                 <span>会話履歴</span>
             </h1>
-            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+            <button class="back-btn" onclick="window.location.href='/'">
                 ← 戻る
             </button>
         </div>
@@ -609,7 +609,7 @@
                     
                     if (response.status === 401) {
                         TokenManager.clearToken();
-                        window.location.href = '/frontend_auth.html';
+                        window.location.href = '/';
                         return;
                     }
                     
@@ -773,7 +773,7 @@
         async function loadConversations(page = 1) {
             const token = getAuthToken();
             if (!token) {
-                window.location.href = '/frontend_auth.html';
+                window.location.href = '/';
                 return;
             }
 
@@ -1015,7 +1015,7 @@
                 
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
 
@@ -1174,7 +1174,7 @@
                 
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
                 
@@ -1304,7 +1304,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
                 

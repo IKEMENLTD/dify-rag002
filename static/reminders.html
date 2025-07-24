@@ -337,7 +337,7 @@
                 <span>⏰</span>
                 <span>リマインダー</span>
             </h1>
-            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+            <button class="back-btn" onclick="window.location.href='/'">
                 ← 戻る
             </button>
         </div>
@@ -568,7 +568,7 @@
                     
                     if (response.status === 401) {
                         TokenManager.clearToken();
-                        window.location.href = '/frontend_auth.html';
+                        window.location.href = '/';
                         return;
                     }
                     
@@ -764,7 +764,7 @@
         async function loadReminders() {
             const token = getAuthToken();
             if (!token) {
-                window.location.href = '/frontend_auth.html';
+                window.location.href = '/';
                 return;
             }
 
@@ -920,7 +920,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
 
@@ -994,7 +994,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
 
@@ -1074,7 +1074,7 @@
 
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
                 
@@ -1117,7 +1117,7 @@
             try {
                 const token = getAuthToken();
                 if (!token) {
-                    window.location.href = '/frontend_auth.html';
+                    window.location.href = '/';
                     return;
                 }
                 

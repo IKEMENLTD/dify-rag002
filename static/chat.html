@@ -400,7 +400,7 @@
                 <span>💬</span>
                 <span>AIチャット</span>
             </h1>
-            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'">
+            <button class="back-btn" onclick="window.location.href='/'">
                 ← 戻る
             </button>
         </div>
@@ -533,7 +533,7 @@
                     if (!token) {
                         ErrorHandler.show('セッションが期限切れです。再ログインしてください。');
                         setTimeout(() => {
-                            window.location.href = '/frontend_auth.html';
+                            window.location.href = '/';
                         }, 2000);
                     }
                 }, delay);
@@ -707,7 +707,7 @@
                 if (!token) {
                     ErrorHandler.show('ログインの有効期限が切れました');
                     setTimeout(() => {
-                        window.location.href = '/frontend_auth.html';
+                        window.location.href = '/';
                     }, 2000);
                     return;
                 }
@@ -843,7 +843,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const token = getAuthToken();
             if (!token) {
-                window.location.href = '/frontend_auth.html';
+                window.location.href = '/';
             }
             messageInput.focus();
         });

@@ -418,7 +418,7 @@
                 <span>🔑</span>
                 <span>API Key管理</span>
             </h1>
-            <button class="back-btn" onclick="window.location.href='/frontend_auth.html'" type="button" aria-label="メインメニューに戻る">
+            <button class="back-btn" onclick="window.location.href='/'" type="button" aria-label="メインメニューに戻る">
                 ← 戻る
             </button>
         </div>
@@ -513,7 +513,7 @@
         async function loadApiKeys() {
             const token = getAuthToken();
             if (!token) {
-                window.location.href = '/frontend_auth.html';
+                window.location.href = '/';
                 return;
             }
 
@@ -756,7 +756,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const user = getUserInfo();
             if (!user) {
-                window.location.href = '/frontend_auth.html';
+                window.location.href = '/';
                 return;
             }
             
