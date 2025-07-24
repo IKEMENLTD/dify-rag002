@@ -759,7 +759,7 @@ def get_profile():
 
 @app.route('/api/api-keys', methods=['POST'])
 @require_auth(['write'])
-def create_api_key():
+def create_new_api_key():
     """API Key生成"""
     try:
         data = request.get_json()
