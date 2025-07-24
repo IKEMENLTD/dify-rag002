@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Cache bust: 2025-01-24-v2
 from flask import Flask, request, jsonify, g, make_response
 from flask_cors import CORS
 from functools import wraps
@@ -757,9 +758,9 @@ def get_profile():
         logger.error(f"Profile error: {str(e)}")
         return jsonify({'error': 'Failed to get profile'}), 500
 
-@app.route('/api/api-keys', methods=['POST'])
+@app.route('/api/keys/create', methods=['POST'])
 @require_auth(['write'])
-def create_new_api_key():
+def generate_api_key():
     """API Key生成"""
     try:
         data = request.get_json()

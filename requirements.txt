@@ -11,4 +11,4 @@ APScheduler>=3.10.0
 pytz>=2023.0
 PyJWT>=2.8.0
 flask-jwt-extended>=4.5.0
-# Force rebuild 2025-01-24
+# Force rebuild 2025-01-24-v2
