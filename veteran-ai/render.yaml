@@ -1,0 +1,53 @@
+services:
+  - type: web
+    name: veteran-ai
+    env: python
+    buildCommand: |
+      # Install system dependencies
+      apt-get update && apt-get install -y \
+        tesseract-ocr tesseract-ocr-jpn tesseract-ocr-eng \
+        poppler-utils ffmpeg curl
+      
+      # Install Python dependencies
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      
+      # Install Node.js and build frontend
+      cd frontend && npm ci && npm run build && cd ..
+    startCommand: cd backend && python main.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 8000
+      - key: DEBUG
+        value: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src/backend
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SLACK_BOT_TOKEN
+        sync: false
+      - key: SLACK_APP_TOKEN
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false
+      - key: LINE_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: LINE_CHANNEL_SECRET
+        sync: false
+      - key: CHATWORK_API_TOKEN
+        sync: false
+
+  - type: redis
+    name: veteran-ai-redis
+    ipAllowList: []
