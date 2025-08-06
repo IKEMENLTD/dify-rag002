@@ -44,7 +44,7 @@ class RAGEngine:
                 conversation_id=conversation_id,
                 sources=search_results,
                 metadata={
-                    "model_used": "gpt-4",
+                    "model_used": "claude-3-5-sonnet",
                     "search_results_count": len(search_results),
                     "context_length": len(self._build_context(search_results))
                 }
@@ -77,38 +77,38 @@ class RAGEngine:
         user_prompt = self._create_user_prompt(query, context_text)
         
         try:
-            # Use GPT-4 as primary LLM
-            response = await self.openai_client.chat.completions.create(
-                model="gpt-4-turbo-preview",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
+            # Use Claude as primary LLM
+            message = await self.anthropic_client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1000,
                 temperature=0.7,
-                max_tokens=1000
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ]
             )
             
-            return response.choices[0].message.content
+            return message.content[0].text
             
-        except Exception as openai_error:
-            print(f"OpenAI error: {openai_error}")
+        except Exception as claude_error:
+            print(f"Claude error: {claude_error}")
             
-            # Fallback to Claude
+            # Fallback to OpenAI (if available)
             try:
-                message = await self.anthropic_client.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    max_tokens=1000,
-                    temperature=0.7,
-                    system=system_prompt,
+                response = await self.openai_client.chat.completions.create(
+                    model="gpt-4-turbo-preview",
                     messages=[
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
-                    ]
+                    ],
+                    temperature=0.7,
+                    max_tokens=1000
                 )
                 
-                return message.content[0].text
+                return response.choices[0].message.content
                 
-            except Exception as claude_error:
-                print(f"Claude error: {claude_error}")
+            except Exception as openai_error:
+                print(f"OpenAI error: {openai_error}")
                 raise Exception("All LLM providers failed")
     
     def _build_context(self, sources: List[SearchResult]) -> str:
